@@ -1,0 +1,1089 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#011E49">
+<title>ช่างครบ Changkrob — แค็ตตาล็อกสินค้า</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ช่างครบ">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mitr:wght@500;600&family=Sarabun:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+html{-webkit-text-size-adjust:100%}body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+/* ช่างครบ Changkrob brand: navy header from the logo, logo orange for actions, warm neutral page. */
+:root{
+  --navy:#011E49; --brand:#FF7502; --brand-deep:#C25500; --on-brand:#011E49; --brand-soft:#FFEBD9;
+  --bg:#F3F1EF; --surface:#FFFFFF; --ink:#24201D; --muted:#6F6660; --line:#E2DCD7; --chip:#EEE8E3;
+  --ok:#2F8A4C; --ok-bg:#E3F3E7; --warn:#B7700A; --warn-bg:#FCEFD6; --bad:#C0312B; --bad-bg:#FBE3E1;
+  --info:#2D62A8; --info-bg:#E2ECF8;
+  --f-display:"Mitr","Sarabun",system-ui,sans-serif;
+  --f-body:"Sarabun",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --navy:#011637; --brand-deep:#FF9A45; --brand-soft:#3A2410;
+  --bg:#171412; --surface:#221E1B; --ink:#F2EDE9; --muted:#A99F98; --line:#38312C; --chip:#2E2824;
+  --ok:#6FCB8B; --ok-bg:#1D3326; --warn:#F2B451; --warn-bg:#3A2D14; --bad:#F07C72; --bad-bg:#3D1E1B;
+  --info:#8DB6EE; --info-bg:#1C2A3D; color-scheme:dark}}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--navy)}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--brand) 60%,transparent);outline-offset:2px}
+.num{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+
+/* header */
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--navy);color:#fff;border-bottom:3px solid var(--brand);
+  background-image:repeating-linear-gradient(-45deg,transparent 0 14px,rgba(255,255,255,.06) 14px 28px)}
+header.top .wrap{display:flex;align-items:center;gap:10px;padding-block:12px;flex-wrap:wrap}
+.mark{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+.mark b{font-family:var(--f-display);font-weight:600;font-size:22px}
+.mark span{font-size:13px;opacity:.92}
+.mark b em{font-style:normal;font-family:var(--f-body);font-weight:600;font-size:13px;letter-spacing:2.5px;color:var(--brand);margin-left:4px;vertical-align:middle}
+.logo{width:44px;height:44px;border-radius:10px;flex:none;background:var(--navy)}
+.spacer{flex:1}
+.sync{font-size:12px;display:flex;align-items:center;gap:6px}
+.sync i{width:8px;height:8px;border-radius:50%;background:#fff;opacity:.5}
+.sync.live i{background:#9BF2B5;opacity:1}
+.btn{border:0;border-radius:10px;padding:9px 14px;font-weight:600;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;text-decoration:none}
+.btn-light{background:var(--brand);color:var(--on-brand)}
+.btn-ghost-light{background:rgba(255,255,255,.12);color:#fff}
+.btn-brand{background:var(--brand);color:var(--on-brand)}
+.btn-plain{background:var(--chip);color:var(--ink)}
+.btn-line{background:var(--surface);border:1px solid var(--line);color:var(--ink)}
+.btn-danger{background:var(--bad-bg);color:var(--bad)}
+.btn-sm{padding:6px 10px;font-size:13px;border-radius:8px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+
+.banner{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 14px;margin-top:14px;font-size:13.5px}
+.banner b{color:var(--ink)}
+
+/* page title */
+.ptitle{display:flex;align-items:flex-end;gap:12px;margin-top:20px;flex-wrap:wrap}
+.ptitle h1{font-family:var(--f-display);font-weight:500;font-size:26px;margin:0;line-height:1.2}
+.ptitle p{margin:2px 0 0;color:var(--muted);font-size:14px}
+
+/* tiles (also filters) */
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;text-align:left;display:flex;flex-direction:column;gap:2px}
+.tile small{font-size:12.5px;color:var(--muted)}
+.tile strong{font-family:var(--f-num);font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.25}
+.tile strong span{font-family:var(--f-body);font-size:13px;font-weight:500;color:var(--muted);margin-left:4px}
+.tile em{font-style:normal;font-size:11.5px;color:var(--muted)}
+.tile[aria-pressed="true"]{border-color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand)}
+.tile.warn strong{color:var(--warn)} .tile.ok strong{color:var(--ok)} .tile.info strong{color:var(--info)}
+.tile.static{cursor:default}
+@media (max-width:900px){.tiles{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.tile strong{font-size:20px}.tile:first-child{grid-column:span 2}}
+
+/* toolbar */
+.tools{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center}
+.search{flex:1 1 260px;position:relative;min-width:0}
+.search input{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 12px 10px 38px}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.tools select{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 10px;max-width:180px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:9px 11px;color:var(--muted);display:grid;place-items:center}
+.seg button[aria-pressed="true"]{background:var(--chip);color:var(--ink)}
+.menu{position:relative}
+.menu-pop{position:absolute;right:0;top:calc(100% + 6px);background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.14);padding:6px;min-width:260px;z-index:8;display:flex;flex-direction:column}
+.menu-pop button{border:0;background:none;text-align:left;padding:9px 10px;border-radius:8px;display:flex;flex-direction:column}
+.menu-pop button:hover{background:var(--chip)}
+.menu-pop button small{color:var(--muted);font-size:12px}
+.menu-pop hr{border:0;border-top:1px solid var(--line);margin:4px 2px}
+.countline{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin:14px 2px 8px}
+
+/* grid view */
+main{padding-bottom:48px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;text-align:left;padding:0;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:color-mix(in srgb,var(--brand) 50%,var(--line));box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.thumb{aspect-ratio:1/1;background:var(--chip);position:relative;display:grid;place-items:center;color:var(--muted);overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .noimg{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px}
+.thumb .badges{position:absolute;left:8px;top:8px;right:8px;display:flex;justify-content:space-between;gap:6px;align-items:flex-start}
+.thumb .count{position:absolute;right:8px;bottom:8px;background:rgba(0,0,0,.55);color:#fff;font-size:11.5px;border-radius:6px;padding:1px 7px}
+.pill{font-size:11.5px;font-weight:600;border-radius:999px;padding:2px 9px;white-space:nowrap;display:inline-block}
+.pill.ok{background:var(--ok-bg);color:var(--ok)} .pill.low{background:var(--warn-bg);color:var(--warn)} .pill.out{background:var(--bad-bg);color:var(--bad)}
+.pill.s{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.pill.s-ready{background:var(--info-bg);color:var(--info);border-color:transparent}
+.pill.s-live{background:var(--brand);color:var(--on-brand);border-color:transparent}
+.pill.s-off{background:var(--chip);color:var(--muted)}
+.cbody{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.sku{font-family:var(--f-num);font-size:11.5px;color:var(--muted);letter-spacing:.2px}
+.cname{font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
+.cmeta{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cprice{display:flex;justify-content:space-between;align-items:flex-end;margin-top:4px;gap:6px}
+.cprice b{font-family:var(--f-num);font-size:18px;font-weight:600}
+.profit{font-family:var(--f-num);font-size:12.5px;font-weight:600}
+.profit.pos{color:var(--ok)} .profit.neg{color:var(--bad)} .profit.na{color:var(--muted);font-weight:500}
+.cfoot{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--muted);margin-top:6px;padding-top:8px;border-top:1px dashed var(--line)}
+.ready{display:flex;align-items:center;gap:6px}
+.ready .rb{width:44px;height:5px;border-radius:3px;background:var(--chip);overflow:hidden}
+.ready .rb i{display:block;height:100%;background:var(--warn)}
+.ready.full .rb i{background:var(--ok)}
+
+/* list view */
+.table{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:auto}
+.table table{width:100%;border-collapse:collapse;min-width:860px}
+.table th{font-size:12px;color:var(--muted);font-weight:500;text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--surface);position:sticky;top:0}
+.table td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:14px}
+.table tr:last-child td{border-bottom:0}
+.table tbody tr{cursor:pointer}
+.table tbody tr:hover td{background:color-mix(in srgb,var(--chip) 50%,transparent)}
+.table .r{text-align:right}
+.tthumb{width:44px;height:44px;border-radius:8px;background:var(--chip);overflow:hidden;display:grid;place-items:center;color:var(--muted);flex:none}
+.tthumb img{width:100%;height:100%;object-fit:cover}
+.tname{display:flex;gap:10px;align-items:center;min-width:240px}
+.tname b{font-weight:600;display:block;line-height:1.3}
+.empty{padding:40px 20px;text-align:center;color:var(--muted);background:var(--surface);border:1px dashed var(--line);border-radius:12px}
+.empty h3{font-family:var(--f-display);font-weight:500;color:var(--ink);margin:0 0 6px;font-size:18px}
+footer.note{color:var(--muted);font-size:12.5px;margin-top:18px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+/* dialogs */
+.scrim{position:fixed;inset:0;background:rgba(20,14,10,.48);z-index:20;display:grid;place-items:center;padding:16px}
+.dlg{background:var(--surface);border-radius:16px;width:min(460px,100%);max-height:calc(100dvh - 32px);display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.dlg header{display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid var(--line)}
+.dlg header h2{font-family:var(--f-display);font-weight:500;font-size:19px;margin:0;flex:1;line-height:1.25}
+.dlg header small{display:block;font-family:var(--f-body);font-size:12px;color:var(--muted);letter-spacing:.6px}
+.x{width:36px;height:36px;border-radius:50%;border:0;background:var(--chip);font-size:20px;line-height:1;display:grid;place-items:center}
+.dlg .body{padding:16px 18px;overflow:auto}
+.dlg footer{display:flex;gap:8px;justify-content:flex-end;padding:12px 18px;border-top:1px solid var(--line);align-items:center;flex-wrap:wrap}
+
+/* product editor */
+.ed{width:min(1040px,100%)}
+.ed .body{padding:0;display:grid;grid-template-columns:minmax(0,1fr) 300px;align-items:start}
+.ed form{padding:6px 20px 20px;min-width:0}
+.ed aside{position:sticky;top:0;padding:16px;border-left:1px solid var(--line);display:flex;flex-direction:column;gap:12px;background:color-mix(in srgb,var(--bg) 55%,var(--surface));min-height:100%}
+@media (max-width:860px){
+  .scrim.full{padding:0}
+  .ed{border-radius:0;max-height:100dvh;height:100dvh}
+  .ed .body{grid-template-columns:minmax(0,1fr)}
+  .ed aside{position:static;border-left:0;border-top:1px solid var(--line)}
+  .ed form{padding:4px 16px 16px}
+}
+.sec{padding-top:16px;margin-top:6px;border-top:1px solid var(--line)}
+.sec:first-child{border-top:0;margin-top:0}
+.sec h3{font-family:var(--f-display);font-weight:500;font-size:16px;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.sec h3 .hint{font-family:var(--f-body);font-size:12px;color:var(--muted);font-weight:400}
+.fg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 12px}
+.fg.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.fg .w2{grid-column:span 2} .fg .wall{grid-column:1/-1}
+@media (max-width:560px){.fg,.fg.c3{grid-template-columns:repeat(2,minmax(0,1fr))}.fg .w2{grid-column:1/-1}}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+label.f .lb{display:flex;justify-content:space-between;gap:6px}
+label.f .lb i{font-style:normal;font-family:var(--f-num);font-size:11.5px}
+label.f .lb i.over{color:var(--bad)}
+.f input,.f select,.f textarea{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 10px;color:var(--ink);width:100%;min-width:0}
+.f textarea{resize:vertical;min-height:120px;line-height:1.55}
+.f input:focus,.f select:focus,.f textarea:focus{border-color:var(--brand);outline:none;box-shadow:0 0 0 3px color-mix(in srgb,var(--brand) 18%,transparent)}
+.f.req .lb b::after{content:" *";color:var(--bad)}
+.f .help{font-size:11.5px;color:var(--muted)}
+.f.err input{border-color:var(--bad)}
+.dims{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+
+/* images */
+.imgs{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.im{position:relative;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:var(--chip);border:1px solid var(--line)}
+.im img{width:100%;height:100%;object-fit:cover;display:block}
+.im .tag{position:absolute;left:5px;top:5px;background:var(--brand);color:var(--on-brand);font-size:11px;font-weight:600;border-radius:6px;padding:0 6px}
+.im .ops{position:absolute;inset:auto 4px 4px 4px;display:flex;justify-content:space-between;opacity:0;transition:opacity .15s}
+.im:hover .ops,.im:focus-within .ops{opacity:1}
+@media (hover:none){.im .ops{opacity:1}}
+.im .ops button{width:28px;height:28px;border-radius:7px;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:14px;display:grid;place-items:center}
+.im.loading{display:grid;place-items:center;font-size:12px;color:var(--muted)}
+.addimg{aspect-ratio:1/1;border-radius:10px;border:1.5px dashed var(--line);background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--muted);font-size:12.5px;padding:4px}
+.addimg b{font-size:22px;line-height:1;color:var(--brand)}
+.addimg:hover{border-color:var(--brand)}
+.imgopts{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:var(--muted);align-items:center}
+.imgopts label{display:flex;gap:6px;align-items:center}
+.drop{outline:2px dashed var(--brand);outline-offset:4px;border-radius:12px}
+
+/* editor aside */
+.box{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+.box h4{margin:0 0 8px;font-family:var(--f-display);font-weight:500;font-size:15px}
+.calc{display:flex;flex-direction:column;gap:4px;font-size:13px}
+.calc div{display:flex;justify-content:space-between;gap:8px}
+.calc div span:last-child{font-family:var(--f-num)}
+.calc .tot{border-top:1px solid var(--line);margin-top:4px;padding-top:6px;font-weight:600;font-size:15px}
+.calc .tot span:last-child{font-size:18px}
+.calc .muted{color:var(--muted)}
+.checks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:5px;font-size:13px}
+.checks li{display:flex;gap:8px;align-items:flex-start}
+.checks li::before{content:"";flex:none;width:16px;height:16px;border-radius:50%;margin-top:2px;border:1.5px solid var(--line);background:var(--surface)}
+.checks li.on::before{border-color:var(--ok);background:var(--ok) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4 8.5l2.5 2.5L12 5.5' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E") center/12px no-repeat}
+.checks li.on{color:var(--muted)}
+.checks li small{display:block;color:var(--muted);font-size:11.5px}
+.avail{display:flex;justify-content:space-between;font-size:13px}
+.metaline{font-size:12px;color:var(--muted)}
+
+/* pin */
+.pinbox input{width:100%;font-family:var(--f-num);font-size:26px;letter-spacing:8px;text-align:center;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--surface)}
+.pinbox p{color:var(--muted);font-size:14px;margin:0 0 12px}
+.pinbox .err{color:var(--bad);font-size:13px;margin-top:8px;min-height:1.2em}
+
+.toast{position:fixed;left:50%;bottom:max(20px,env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;z-index:40;font-size:14px;box-shadow:0 8px 30px rgba(0,0,0,.25);max-width:calc(100% - 32px)}
+.spin{width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .7s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (max-width:640px){
+  header.top .wrap{flex-wrap:nowrap;gap:8px}
+  .mark b{font-size:18px} .mark span{font-size:12px} .mark b em{display:none}
+  .logo{width:38px;height:38px}
+  .sync span{display:none}
+  header.top .btn{padding:8px 10px}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .cbody{padding:8px 10px 10px}
+  .cprice b{font-size:16px}
+  .cfoot{flex-direction:column;align-items:flex-start;gap:4px}
+  .thumb .badges{left:6px;top:6px;right:6px;flex-direction:column;align-items:flex-start;gap:4px}
+  .tools select{flex:1 1 40%;max-width:none}
+  .hide-sm{display:none!important}
+  .ptitle h1{font-size:22px}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <img class="logo" src="icon-192.png" alt="" width="44" height="44">
+    <div class="mark"><b>ช่างครบ <em>CHANGKROB</em></b><span>แค็ตตาล็อกสินค้า<span class="hide-sm"> · เตรียมลง Shopee</span></span></div>
+    <div class="spacer"></div>
+    <div class="sync" id="sync"><i></i><span>กำลังโหลด…</span></div>
+    <button class="btn btn-ghost-light" id="settingsBtn" type="button" title="ตั้งค่า">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      <span class="hide-sm">ตั้งค่า</span>
+    </button>
+    <button class="btn btn-light" id="addBtn" type="button">＋ เพิ่มสินค้า</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="banner" id="banner" hidden></div>
+
+  <div class="ptitle">
+    <div><h1 id="viewTitle">สินค้าทั้งหมด</h1><p>รวมข้อมูลสินค้า ต้นทุน และสต็อก ให้พร้อมลงขายบน Shopee</p></div>
+  </div>
+
+  <div class="tiles" id="tiles">
+    <button class="tile" data-tile="all" aria-pressed="true"><small>สินค้าทั้งหมด</small><strong id="tAll">0<span>SKU</span></strong><em>1 รายการ = 1 SKU</em></button>
+    <div class="tile static"><small>มูลค่าสต็อก (ต้นทุน)</small><strong id="tValue">0<span>บาท</span></strong><em>จากจำนวนคงเหลือจริง</em></div>
+    <button class="tile warn" data-tile="restock" aria-pressed="false"><small>ต้องเติมสต็อก</small><strong id="tRestock">0<span>รายการ</span></strong><em>พร้อมขายถึงจุดสั่งซื้อหรือต่ำกว่า</em></button>
+    <button class="tile info" data-tile="incomplete" aria-pressed="false"><small>ข้อมูลยังไม่ครบ</small><strong id="tIncomplete">0<span>รายการ</span></strong><em>ยังขาดข้อมูลที่ Shopee ต้องใช้</em></button>
+    <button class="tile ok" data-tile="ready" aria-pressed="false"><small>พร้อมลงขาย</small><strong id="tReady">0<span>รายการ</span></strong><em>สถานะ "พร้อมลงขาย"</em></button>
+  </div>
+
+  <div class="tools">
+    <div class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="ค้นหาชื่อสินค้า, SKU หรือยี่ห้อ" autocomplete="off">
+    </div>
+    <select id="fCat" aria-label="หมวดหมู่"><option value="">ทุกหมวดหมู่</option></select>
+    <select id="fStatus" aria-label="สถานะลงขาย"><option value="">ทุกสถานะลงขาย</option></select>
+    <select id="fStock" aria-label="สถานะสต็อก">
+      <option value="">ทุกสถานะสต็อก</option><option value="ok">มีสินค้า</option><option value="low">ใกล้หมด</option><option value="out">หมดสต็อก</option>
+    </select>
+    <div class="seg" role="group" aria-label="มุมมอง">
+      <button type="button" data-view="grid" aria-pressed="true" title="แบบการ์ด"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg></button>
+      <button type="button" data-view="list" aria-pressed="false" title="แบบตาราง"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></button>
+    </div>
+    <div class="menu">
+      <button class="btn btn-line" id="ioBtn" type="button" aria-expanded="false">Excel ▾</button>
+      <div class="menu-pop" id="ioMenu" hidden>
+        <button type="button" data-io="shopee"><b>↓ ส่งออกสำหรับ Shopee Mass Upload</b><small>จัดคอลัมน์ตามแบบฟอร์มของ Shopee พร้อมลิงก์รูป</small></button>
+        <button type="button" data-io="all"><b>↓ ส่งออกข้อมูลทั้งหมด (.xlsx)</b><small>ทุกช่อง ใช้สำรองหรือแก้ไขแล้วนำเข้าใหม่</small></button>
+        <button type="button" data-io="csv"><b>↓ ส่งออก CSV</b><small>เฉพาะรายการที่กรองอยู่</small></button>
+        <hr>
+        <button type="button" data-io="import"><b>↑ นำเข้าจาก Excel</b><small>เพิ่ม/อัปเดตสินค้าตามรหัส SKU</small></button>
+        <button type="button" data-io="template"><b>↓ ดาวน์โหลดแบบฟอร์มนำเข้า</b><small>ไฟล์เปล่าพร้อมหัวคอลัมน์</small></button>
+      </div>
+      <input type="file" id="importFile" accept=".xlsx,.xls,.csv" hidden>
+    </div>
+  </div>
+
+  <div class="countline"><span id="countText">—</span><span id="sortWrap"><select id="sort" aria-label="เรียงลำดับ" style="border:0;background:none;color:var(--muted)">
+    <option value="updated">แก้ไขล่าสุด</option><option value="name">ชื่อ ก–ฮ</option><option value="sku">SKU</option><option value="stock">คงเหลือน้อย → มาก</option><option value="profit">กำไรต่อหน่วย มาก → น้อย</option><option value="ready">ข้อมูลครบน้อย → มาก</option>
+  </select></span></div>
+  <div id="out"></div>
+
+  <footer class="note">
+    <span>ข้อมูลเก็บใน Google Sheets ของร้าน · ไม่ได้เชื่อมต่อหรือปรับสต็อกบน Shopee อัตโนมัติ</span>
+    <span id="who"></span>
+  </footer>
+</main>
+
+<!-- product editor -->
+<div class="scrim full" id="edScrim" hidden>
+  <div class="dlg ed" role="dialog" aria-modal="true" aria-labelledby="edTitle">
+    <header>
+      <h2 id="edTitle"><small>PRODUCT DETAILS</small><span>เพิ่มสินค้าใหม่</span></h2>
+      <button class="x" type="button" data-close aria-label="ปิด">×</button>
+    </header>
+    <div class="body">
+      <form id="edForm" novalidate autocomplete="off">
+        <section class="sec" id="secImg">
+          <h3>รูปสินค้า <span class="hint" id="imgHint">สูงสุด 9 รูป · รูปแรกเป็นรูปปก</span></h3>
+          <div class="imgs" id="imgs"></div>
+          <div class="imgopts">
+            <label><input type="checkbox" id="squareOpt" checked> ปรับเป็นสี่เหลี่ยมจัตุรัสพื้นขาว (Shopee แนะนำ 1:1)</label>
+            <button class="btn btn-plain btn-sm" type="button" id="addUrlBtn">＋ เพิ่มจากลิงก์รูป</button>
+          </div>
+          <input type="file" id="imgFile" accept="image/jpeg,image/png,image/webp" multiple hidden>
+        </section>
+
+        <section class="sec">
+          <h3>ข้อมูลสินค้า</h3>
+          <div class="fg">
+            <label class="f req wall"><span class="lb"><b>ชื่อสินค้า</b><i id="nameCount">0/120</i></span><input name="name" maxlength="255" placeholder="เช่น คีมตัดสายไฟ 6 นิ้ว ด้ามหุ้มยาง King Eagle"></label>
+            <label class="f req"><span class="lb"><b>รหัส SKU</b></span><input name="sku" class="num" placeholder="เช่น KE-CUT-006"><span class="help">ไม่ซ้ำกัน ใช้ A–Z 0–9 - _</span></label>
+            <label class="f"><span class="lb">หมวดหมู่ร้าน</span><input name="category" list="catList" placeholder="เช่น คีมและประแจ"></label>
+            <label class="f"><span class="lb">ยี่ห้อ / รุ่น</span><input name="brand" list="brandList"></label>
+            <label class="f"><span class="lb">หน่วยขาย</span><select name="unit"></select></label>
+            <label class="f"><span class="lb">สถานะลงขาย</span><select name="status"></select></label>
+            <label class="f"><span class="lb">ลิงก์สินค้า Shopee</span><input name="shopeeUrl" type="url" placeholder="https://shopee.co.th/…"></label>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h3>ข้อมูลสำหรับ Shopee <span class="hint">ใช้ตอนลงสินค้า / Mass Upload</span></h3>
+          <div class="fg">
+            <label class="f wall"><span class="lb"><span>หมวดหมู่ Shopee</span></span><input name="shopeeCat" placeholder="รหัสหมวดหมู่ หรือชื่อ เช่น เครื่องมือช่าง > คีม"><span class="help">ดูรหัสหมวดหมู่ได้จากแบบฟอร์ม Mass Upload ใน Seller Center</span></label>
+            <label class="f wall"><span class="lb"><span>รายละเอียดสินค้า</span><i id="descCount">0/3000</i></span><textarea name="description" placeholder="คุณสมบัติเด่น, วัสดุ, ขนาด, การใช้งาน, สิ่งที่อยู่ในกล่อง, การรับประกัน"></textarea></label>
+            <label class="f"><span class="lb">Parent SKU (กลุ่มตัวเลือก)</span><input name="parentSku" class="num" list="parentList" placeholder="เว้นว่างถ้าไม่มีตัวเลือก"><span class="help">สินค้าหลายขนาดใส่ Parent SKU เดียวกัน</span></label>
+            <label class="f"><span class="lb">ชื่อตัวเลือก</span><input name="varName" list="varNameList" placeholder="เช่น ขนาด, สี"></label>
+            <label class="f"><span class="lb">ตัวเลือก / ขนาด</span><input name="variant" placeholder="เช่น 6 นิ้ว"></label>
+            <label class="f"><span class="lb">เวลาเตรียมจัดส่ง (วัน)</span><input name="dts" type="number" min="0" step="1" inputmode="numeric" placeholder="ตามค่าเริ่มต้นร้าน"></label>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h3>ขนาดและการจัดส่ง</h3>
+          <div class="fg">
+            <label class="f"><span class="lb">ขนาดสินค้า (ก × ย × ส ซม.)</span><input name="size" placeholder="เช่น 16 × 5 × 2"></label>
+            <label class="f"><span class="lb">ขนาดกล่องพัสดุ ย × ก × ส (ซม.)</span><span class="dims"><input name="pkgL" type="number" min="0" step="any" inputmode="decimal" placeholder="ยาว"><input name="pkgW" type="number" min="0" step="any" inputmode="decimal" placeholder="กว้าง"><input name="pkgH" type="number" min="0" step="any" inputmode="decimal" placeholder="สูง"></span></label>
+            <label class="f"><span class="lb">น้ำหนักสินค้า (กก.)</span><input name="weight" type="number" min="0" step="any" inputmode="decimal" placeholder="ยังไม่ระบุ"></label>
+            <label class="f"><span class="lb">น้ำหนักหลังแพ็ก (กก.)</span><input name="packedWeight" type="number" min="0" step="any" inputmode="decimal" placeholder="ยังไม่ระบุ"><span class="help">Shopee ใช้คำนวณค่าส่ง</span></label>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h3>ต้นทุนและราคาต่อหน่วย <span class="hint">บาท</span></h3>
+          <div class="fg c3">
+            <label class="f"><span class="lb">ต้นทุนสินค้า</span><input name="cost" type="number" min="0" step="any" inputmode="decimal" placeholder="ยังไม่ระบุ"></label>
+            <label class="f"><span class="lb">ราคาขาย</span><input name="price" type="number" min="0" step="any" inputmode="decimal" placeholder="ยังไม่ระบุ"></label>
+            <label class="f"><span class="lb">ส่วนลดที่ร้านออก</span><input name="discount" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></label>
+            <label class="f"><span class="lb">ค่าบรรจุภัณฑ์</span><input name="packing" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></label>
+            <label class="f"><span class="lb">ค่าใช้จ่ายอื่น</span><input name="other" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></label>
+            <span></span>
+            <label class="f"><span class="lb">ค่าธรรมเนียมรวม (%)</span><input name="feePct" type="number" min="0" step="any" inputmode="decimal" id="feePctIn"><span class="help" id="feeHelp">เว้นว่าง = ใช้ค่าเริ่มต้นร้าน</span></label>
+            <label class="f"><span class="lb">ค่าธรรมเนียมคงที่ / หน่วย</span><input name="fixedFee" type="number" min="0" step="any" inputmode="decimal" id="fixedIn"></label>
+          </div>
+        </section>
+
+        <section class="sec">
+          <h3>สต็อกและผู้จำหน่าย</h3>
+          <div class="fg c3">
+            <label class="f"><span class="lb">คงเหลือจริง</span><input name="stock" type="number" step="1" inputmode="numeric" placeholder="ยังไม่ระบุ"></label>
+            <label class="f"><span class="lb">จองรอส่ง</span><input name="reserved" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></label>
+            <label class="f"><span class="lb">จุดสั่งซื้อเพิ่ม</span><input name="reorder" type="number" min="0" step="1" inputmode="numeric" placeholder="ยังไม่ระบุ"></label>
+            <label class="f"><span class="lb">ตำแหน่งจัดเก็บ</span><input name="location" placeholder="เช่น ชั้น A3"></label>
+            <label class="f"><span class="lb">ผู้จำหน่าย / ช่องทางติดต่อ</span><input name="supplier" list="supplierList"></label>
+            <label class="f"><span class="lb">ระยะเวลาสั่งเข้า (วัน)</span><input name="lead" type="number" min="0" step="1" inputmode="numeric"></label>
+            <label class="f wall"><span class="lb">หมายเหตุ</span><textarea name="notes" style="min-height:70px"></textarea></label>
+          </div>
+        </section>
+      </form>
+      <aside>
+        <div class="box">
+          <h4>กำไรประมาณ / หน่วย</h4>
+          <div class="calc" id="calc"></div>
+        </div>
+        <div class="box">
+          <h4>ความพร้อมลง Shopee <span class="num" id="readyScore" style="float:right;font-size:13px"></span></h4>
+          <ul class="checks" id="checks"></ul>
+        </div>
+        <div class="box">
+          <h4>สต็อก</h4>
+          <div class="avail"><span>พร้อมขาย</span><b class="num" id="availOut">—</b></div>
+          <div class="metaline" id="edMeta" style="margin-top:8px"></div>
+        </div>
+      </aside>
+    </div>
+    <footer>
+      <button class="btn btn-danger" type="button" id="delBtn" hidden>ลบ</button>
+      <button class="btn btn-plain" type="button" id="dupBtn" hidden title="คัดลอกเป็นสินค้าใหม่ เช่น เพิ่มขนาดอื่น">คัดลอก</button>
+      <span class="spacer"></span>
+      <button class="btn btn-plain" type="button" data-close>ยกเลิก</button>
+      <button class="btn btn-brand" type="submit" form="edForm" id="saveBtn">บันทึกสินค้า</button>
+    </footer>
+  </div>
+</div>
+
+<!-- settings -->
+<div class="scrim" id="setScrim" hidden>
+  <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="setTitle">
+    <header><h2 id="setTitle">ตั้งค่าร้าน</h2><button class="x" type="button" data-close aria-label="ปิด">×</button></header>
+    <form class="body" id="setForm">
+      <div class="fg">
+        <label class="f"><span class="lb">ค่าธรรมเนียมรวมเริ่มต้น (%)</span><input name="feePct" type="number" min="0" step="any" inputmode="decimal" placeholder="เช่น 10"></label>
+        <label class="f"><span class="lb">ค่าธรรมเนียมคงที่ / หน่วย (บาท)</span><input name="fixedFee" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></label>
+        <label class="f"><span class="lb">เวลาเตรียมจัดส่งเริ่มต้น (วัน)</span><input name="dts" type="number" min="0" step="1" inputmode="numeric" placeholder="เช่น 2"></label>
+        <span></span>
+        <p class="wall" style="margin:0;font-size:12.5px;color:var(--muted)">ตรวจอัตราค่าธรรมเนียมจริงของร้านได้ใน Shopee Seller Center (ค่าคอมมิชชัน + ค่าธุรกรรม + ค่าบริการโปรแกรมที่เข้าร่วม) ค่านี้ใช้กับสินค้าที่ไม่ได้กรอกค่าธรรมเนียมเอง</p>
+      </div>
+    </form>
+    <footer>
+      <span class="metaline spacer" id="setWho"></span>
+      <button class="btn btn-plain" type="button" id="logoutBtn">ออกจากระบบ</button>
+      <button class="btn btn-brand" type="submit" form="setForm">บันทึก</button>
+    </footer>
+  </div>
+</div>
+
+<!-- confirm -->
+<div class="scrim" id="cfScrim" hidden>
+  <div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="cfTitle" style="width:min(400px,100%)">
+    <header><h2 id="cfTitle">ยืนยัน</h2></header>
+    <div class="body" id="cfBody"></div>
+    <footer><button class="btn btn-plain" type="button" id="cfNo">ยกเลิก</button><button class="btn btn-danger" type="button" id="cfYes">ยืนยัน</button></footer>
+  </div>
+</div>
+
+<!-- pin -->
+<div class="scrim" id="pinScrim" hidden>
+  <form class="dlg pinbox" id="pinForm" style="width:min(380px,100%)">
+    <header><h2>เข้าสู่ระบบแค็ตตาล็อก</h2></header>
+    <div class="body">
+      <img src="logo.png" alt="ช่างครบ Changkrob Tools &amp; Hardware" width="120" height="120" style="display:block;margin:0 auto 14px;border-radius:18px">
+      <p>ใส่รหัสพนักงานของคุณ (รหัสเดียวกับที่ตั้งไว้ในชีต Staff)</p>
+      <input id="pinIn" type="password" inputmode="numeric" autocomplete="current-password" aria-label="รหัสพนักงาน">
+      <div class="err" id="pinErr"></div>
+    </div>
+    <footer><button class="btn btn-brand" type="submit" id="pinGo">เข้าสู่ระบบ</button></footer>
+  </form>
+</div>
+
+<datalist id="catList"></datalist><datalist id="brandList"></datalist><datalist id="supplierList"></datalist><datalist id="parentList"></datalist>
+<datalist id="varNameList"><option value="ขนาด"><option value="สี"><option value="รุ่น"><option value="ความยาว"><option value="แพ็ก"></datalist>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/* =====================================================================
+   ตั้งค่า: วางลิงก์ Web app จาก Google Apps Script ระหว่างเครื่องหมาย ' '
+   ถ้าเว้นว่าง เว็บจะเปิดเป็น "โหมดตัวอย่าง" (ข้อมูลอยู่ในเครื่องนี้เท่านั้น)
+   ===================================================================== */
+const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV0mijr_wQfa5xqBZ4IMwmPzDxqvx0tTtqHMhyR3iwx18xKA/exec';
+
+(() => {
+  'use strict';
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
+    del(k) { try { localStorage.removeItem(k); } catch {} }
+  };
+  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const DEMO = !API_URL;
+
+  /* ---------- data model (keys match the Products sheet in Code.gs) ---------- */
+  const NUM = ['pkgL','pkgW','pkgH','weight','packedWeight','dts','cost','price','packing','other','discount','feePct','fixedFee','stock','reserved','reorder','lead'];
+  const TEXT = ['id','sku','parentSku','name','category','shopeeCat','brand','varName','variant','unit','status','description','size','location','supplier','shopeeUrl','notes','createdAt','updatedAt','updatedBy'];
+  const UNITS = ['ชิ้น','อัน','ชุด','คู่','กล่อง','แพ็ก','ม้วน','เส้น','เมตร','ตัว','ถุง','ลัง'];
+  const STATUSES = ['เตรียมข้อมูล','รอถ่ายรูป','พร้อมลงขาย','ลงขายแล้ว','พักขาย','เลิกขาย'];
+  const STATUS_CLS = {'พร้อมลงขาย':'s-ready','ลงขายแล้ว':'s-live','พักขาย':'s-off','เลิกขาย':'s-off'};
+  const MAX_IMG = 9, NAME_MAX = 120, DESC_MAX = 3000;
+
+  const blank = () => { const p = {}; TEXT.forEach(k => p[k] = ''); NUM.forEach(k => p[k] = null); p.images = []; p.unit = 'ชิ้น'; p.status = 'เตรียมข้อมูล'; return p; };
+  function norm(raw) {
+    const p = blank();
+    for (const k of TEXT) if (raw[k] != null) p[k] = String(raw[k]).trim();
+    for (const k of NUM) p[k] = toNum(raw[k]);
+    let im = raw.images;
+    if (typeof im === 'string') im = im.split(/\s*[\n|]\s*/);
+    p.images = (Array.isArray(im) ? im : []).map(s => String(s).trim()).filter(Boolean).slice(0, MAX_IMG);
+    if (!p.unit) p.unit = 'ชิ้น';
+    if (!p.status) p.status = 'เตรียมข้อมูล';
+    return p;
+  }
+  function toNum(v) {
+    if (v === '' || v == null) return null;
+    const n = typeof v === 'number' ? v : Number(String(v).replace(/[,฿\s]/g, ''));
+    return Number.isFinite(n) ? n : null;
+  }
+
+  let items = [], settings = {feePct: null, fixedFee: null, dts: null}, me = '';
+  let pin = store.get('rcc-pin', '');
+  let loaded = false, busy = false;
+  const ui = Object.assign({view: 'grid', tile: 'all', sort: 'updated'}, store.get('rcc-ui', {}));
+
+  /* ---------- calculations ---------- */
+  const avail = p => p.stock == null ? null : p.stock - (p.reserved || 0);
+  function stockState(p) {
+    const a = avail(p);
+    if (a == null) return '';
+    if (a <= 0) return 'out';
+    if (p.reorder != null && a <= p.reorder) return 'low';
+    return 'ok';
+  }
+  const effFee = p => p.feePct != null ? p.feePct : settings.feePct;
+  const effFixed = p => p.fixedFee != null ? p.fixedFee : settings.fixedFee;
+  function profit(p) {
+    if (p.price == null || p.cost == null) return null;
+    const net = p.price - (p.discount || 0);
+    const fee = net * (effFee(p) || 0) / 100 + (effFixed(p) || 0);
+    const v = net - fee - p.cost - (p.packing || 0) - (p.other || 0);
+    return {net, fee, value: v, margin: net > 0 ? v / net * 100 : null};
+  }
+  function checks(p) {
+    return [
+      ['ชื่อสินค้า', !!p.name && p.name.length <= NAME_MAX, p.name.length > NAME_MAX ? `ยาวเกิน ${NAME_MAX} ตัวอักษร` : ''],
+      ['รหัส SKU', !!p.sku, ''],
+      ['รูปสินค้าอย่างน้อย 1 รูป', p.images.length > 0, p.images.length && p.images.length < 3 ? 'แนะนำ 3 รูปขึ้นไป' : ''],
+      ['หมวดหมู่ Shopee', !!p.shopeeCat, ''],
+      ['รายละเอียดสินค้า', p.description.length >= 30, p.description && p.description.length < 30 ? 'ควรเขียนให้ละเอียดขึ้น' : ''],
+      ['ราคาขาย', p.price != null && p.price > 0, ''],
+      ['จำนวนคงเหลือ', p.stock != null, ''],
+      ['น้ำหนักหลังแพ็ก', p.packedWeight != null && p.packedWeight > 0, ''],
+      ['ขนาดกล่องพัสดุ', [p.pkgL, p.pkgW, p.pkgH].every(v => v != null && v > 0), '']
+    ];
+  }
+  const readiness = p => { const c = checks(p); return {done: c.filter(x => x[1]).length, total: c.length}; };
+  const isComplete = p => { const r = readiness(p); return r.done === r.total; };
+
+  const fmt = (n, d = 0) => n == null ? '—' : Number(n).toLocaleString('th-TH', {minimumFractionDigits: d, maximumFractionDigits: d});
+  const baht = n => n == null ? '—' : '฿' + fmt(n, Number.isInteger(n) ? 0 : 2);
+  const money2 = n => n == null ? '—' : (n < 0 ? '−' : '') + '฿' + fmt(Math.abs(n), 2);
+
+  /* ---------- images ---------- */
+  // Drive images are saved as https://lh3.googleusercontent.com/d/<fileId>; thumbnails use a sized variant.
+  const driveId = u => (String(u).match(/(?:\/d\/|[?&]id=)([\w-]{20,})/) || [])[1];
+  const thumbUrl = (u, w = 600) => { const id = driveId(u); return id ? `https://lh3.googleusercontent.com/d/${id}=w${w}` : u; };
+  function imgTag(u, w, alt) {
+    const id = driveId(u);
+    const fb = id ? ` onerror="this.onerror=null;this.src='https://drive.google.com/thumbnail?id=${id}&sz=w${w}'"` : '';
+    return `<img src="${esc(thumbUrl(u, w))}" alt="${esc(alt || '')}" loading="lazy" referrerpolicy="no-referrer"${fb}>`;
+  }
+  async function shrink(file, square) {
+    const max = DEMO ? 700 : 1600; // demo keeps images in localStorage, so keep them small
+    let src;
+    try { src = await createImageBitmap(file); }
+    catch { src = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error('เปิดรูปไม่ได้')); i.src = URL.createObjectURL(file); }); }
+    const w = src.width, h = src.height;
+    const s = Math.min(1, max / Math.max(w, h));
+    const dw = Math.round(w * s), dh = Math.round(h * s);
+    const cw = square ? Math.max(dw, dh) : dw, ch = square ? Math.max(dw, dh) : dh;
+    const c = document.createElement('canvas'); c.width = cw; c.height = ch;
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cw, ch);
+    g.drawImage(src, (cw - dw) / 2, (ch - dh) / 2, dw, dh);
+    return c.toDataURL('image/jpeg', .86);
+  }
+
+  /* ---------- API ---------- */
+  async function api(action, payload = {}) {
+    if (DEMO) return demoApi(action, payload);
+    const res = await fetch(API_URL, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'},
+      body: JSON.stringify(Object.assign({action, pin}, payload))});
+    if (!res.ok) throw new Error('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ (' + res.status + ')');
+    const data = await res.json();
+    if (!data.ok) {
+      if (data.code === 'pin') { pin = ''; store.del('rcc-pin'); askPin(data.error || 'รหัสพนักงานไม่ถูกต้อง'); }
+      throw new Error(data.error || 'เกิดข้อผิดพลาด');
+    }
+    return data;
+  }
+  function applyList(data) {
+    items = (data.products || []).map(norm);
+    settings = {feePct: toNum(data.settings?.feePct), fixedFee: toNum(data.settings?.fixedFee), dts: toNum(data.settings?.dts)};
+    me = data.me || me;
+    loaded = true;
+  }
+  async function refresh(quiet) {
+    if (busy || (!DEMO && !pin)) return;
+    if (!$('#edScrim').hidden && quiet) return; // don't pull data out from under an open editor
+    try {
+      const data = await api('list');
+      applyList(data); setSync(true, DEMO ? 'โหมดตัวอย่าง' : 'เชื่อมต่อแล้ว'); render();
+    } catch (e) { setSync(false, 'ออฟไลน์'); if (!quiet) toast(e.message); }
+  }
+
+  /* demo backend: same contract as Code.gs, kept in localStorage */
+  function demoApi(action, p) {
+    const db = store.get('rcc-demo', null) || seed();
+    const now = new Date().toISOString();
+    const out = () => ({ok: true, products: db.products, settings: db.settings, me: 'ผู้ทดลองใช้'});
+    if (action === 'list') { store.set('rcc-demo', db); return out(); }
+    if (action === 'save') {
+      const x = norm(p.product);
+      if (db.products.some(o => o.sku.toLowerCase() === x.sku.toLowerCase() && o.id !== x.id)) return Promise.reject(new Error('รหัส SKU นี้มีอยู่แล้ว: ' + x.sku));
+      if (!x.id) { x.id = 'P' + Date.now().toString(36); x.createdAt = now; }
+      x.updatedAt = now; x.updatedBy = 'ผู้ทดลองใช้';
+      const i = db.products.findIndex(o => o.id === x.id);
+      i < 0 ? db.products.push(x) : db.products[i] = x;
+      store.set('rcc-demo', db); return {ok: true, product: x};
+    }
+    if (action === 'delete') { db.products = db.products.filter(o => o.id !== p.id); store.set('rcc-demo', db); return {ok: true}; }
+    if (action === 'bulk') {
+      let added = 0, updated = 0;
+      for (const r of p.products) {
+        const x = norm(r); const i = db.products.findIndex(o => o.id === x.id || o.sku.toLowerCase() === x.sku.toLowerCase());
+        x.updatedAt = now; x.updatedBy = 'ผู้ทดลองใช้';
+        if (i < 0) { x.id = 'P' + Math.random().toString(36).slice(2, 9); x.createdAt = now; db.products.push(x); added++; }
+        else { x.id = db.products[i].id; x.createdAt = db.products[i].createdAt; db.products[i] = x; updated++; }
+      }
+      store.set('rcc-demo', db); return {ok: true, added, updated};
+    }
+    if (action === 'settings') { db.settings = Object.assign(db.settings, p.settings); store.set('rcc-demo', db); return {ok: true, settings: db.settings}; }
+    if (action === 'upload') return {ok: true, url: p.data};
+    return Promise.reject(new Error('unknown action'));
+  }
+  function seed() {
+    const t = new Date().toISOString();
+    const rows = [
+      ['KE-CUT-006','คีมตัดสายไฟ 6 นิ้ว ด้ามหุ้มยาง (ตัวอย่าง)','คีมและประแจ','King Eagle','ขนาด','6 นิ้ว','KE-CUT',78,129,22,0,8,'ลงขายแล้ว',0.18,0.22,[18,8,3]],
+      ['KE-CUT-008','คีมตัดสายไฟ 8 นิ้ว ด้ามหุ้มยาง (ตัวอย่าง)','คีมและประแจ','King Eagle','ขนาด','8 นิ้ว','KE-CUT',95,159,6,1,8,'ลงขายแล้ว',0.24,0.28,[22,9,3]],
+      ['TL-WRN-0810','ประแจแหวนข้างปากตาย 8×10 มม. (ตัวอย่าง)','คีมและประแจ','','','','',41,89,4,0,6,'พร้อมลงขาย',0.08,0.1,[16,4,2]],
+      ['TL-TAP-005','ตลับเมตร 5 เมตร ระบบล็อกสาย (ตัวอย่าง)','เครื่องมือวัด','','','','',48,109,0,0,5,'พักขาย',0.2,0.25,[10,10,5]],
+      ['TL-HAM-016','ค้อนหงอนด้ามไฟเบอร์ 16 ออนซ์ (ตัวอย่าง)','เครื่องมือช่าง','','','','',85,189,17,2,5,'เตรียมข้อมูล',0.6,null,null],
+      ['WT-VLV-12','บอลวาล์ว PVC 1/2 นิ้ว (ตัวอย่าง)','ระบบน้ำ','','','','',18,39,60,0,20,'รอถ่ายรูป',0.05,0.06,[8,6,6]]
+    ];
+    const products = rows.map((r, i) => norm({
+      id: 'demo' + i, sku: r[0], name: r[1], category: r[2], brand: r[3], varName: r[4], variant: r[5], parentSku: r[6],
+      cost: r[7], price: r[8], stock: r[9], reserved: r[10], reorder: r[11], status: r[12], weight: r[13], packedWeight: r[14],
+      pkgL: r[15]?.[0], pkgW: r[15]?.[1], pkgH: r[15]?.[2], packing: 4,
+      shopeeCat: i < 4 ? 'เครื่องมือช่าง' : '', description: i < 3 ? 'ข้อมูลตัวอย่าง: เหล็กกล้าคุณภาพสูง ผ่านการชุบแข็ง ด้ามหุ้มยางจับถนัดมือ เหมาะสำหรับงานช่างไฟและงานทั่วไป' : '',
+      images: i < 2 ? [sampleImg(i)] : [], createdAt: t, updatedAt: t, updatedBy: 'ระบบ'
+    }));
+    return {products, settings: {feePct: 12, fixedFee: 0, dts: 2}};
+  }
+  function sampleImg(i) {
+    const c = ['#FF7502', '#011E49'][i % 2];
+    const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400'><rect width='400' height='400' fill='#F6F2EE'/><g fill='none' stroke='${c}' stroke-width='22' stroke-linecap='round'><path d='M150 90l70 140M250 90l-70 140'/><path d='M180 230l-50 90M220 230l50 90' stroke-width='34'/></g><circle cx='200' cy='175' r='16' fill='${c}'/><text x='200' y='378' font-family='sans-serif' font-size='22' text-anchor='middle' fill='#8a7f78'>ภาพตัวอย่าง</text></svg>`;
+    return 'data:image/svg+xml,' + encodeURIComponent(svg);
+  }
+
+  /* ---------- rendering ---------- */
+  function filtered() {
+    const q = $('#q').value.trim().toLowerCase();
+    const cat = $('#fCat').value, st = $('#fStatus').value, sk = $('#fStock').value;
+    let list = items.filter(p => {
+      if (ui.tile === 'restock' && !['low', 'out'].includes(stockState(p))) return false;
+      if (ui.tile === 'incomplete' && isComplete(p)) return false;
+      if (ui.tile === 'ready' && p.status !== 'พร้อมลงขาย') return false;
+      if (cat && p.category !== cat) return false;
+      if (st && p.status !== st) return false;
+      if (sk && stockState(p) !== sk) return false;
+      if (q && ![p.name, p.sku, p.brand, p.parentSku, p.variant, p.category].join(' ').toLowerCase().includes(q)) return false;
+      return true;
+    });
+    const by = {
+      updated: (a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''),
+      name: (a, b) => a.name.localeCompare(b.name, 'th'),
+      sku: (a, b) => a.sku.localeCompare(b.sku, 'en', {numeric: true}),
+      stock: (a, b) => (avail(a) ?? Infinity) - (avail(b) ?? Infinity),
+      profit: (a, b) => (profit(b)?.value ?? -Infinity) - (profit(a)?.value ?? -Infinity),
+      ready: (a, b) => readiness(a).done - readiness(b).done
+    };
+    return list.sort(by[ui.sort] || by.updated);
+  }
+  function fillSelect(sel, values, first) {
+    const cur = sel.value;
+    sel.innerHTML = `<option value="">${first}</option>` + values.map(v => `<option>${esc(v)}</option>`).join('');
+    if (values.includes(cur)) sel.value = cur;
+  }
+  const uniq = arr => [...new Set(arr.filter(Boolean))].sort((a, b) => a.localeCompare(b, 'th'));
+  function render() {
+    // tiles
+    const value = items.reduce((s, p) => s + (p.cost != null && p.stock > 0 ? p.cost * p.stock : 0), 0);
+    $('#tAll').innerHTML = `${fmt(items.length)}<span>SKU</span>`;
+    $('#tValue').innerHTML = `${fmt(value)}<span>บาท</span>`;
+    $('#tRestock').innerHTML = `${fmt(items.filter(p => ['low', 'out'].includes(stockState(p))).length)}<span>รายการ</span>`;
+    $('#tIncomplete').innerHTML = `${fmt(items.filter(p => !isComplete(p)).length)}<span>รายการ</span>`;
+    $('#tReady').innerHTML = `${fmt(items.filter(p => p.status === 'พร้อมลงขาย').length)}<span>รายการ</span>`;
+    $$('#tiles [data-tile]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.tile === ui.tile)));
+    $('#viewTitle').textContent = {all: 'สินค้าทั้งหมด', restock: 'ต้องเติมสต็อก', incomplete: 'ข้อมูลยังไม่ครบ', ready: 'พร้อมลงขาย'}[ui.tile];
+    $$('.seg [data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === ui.view)));
+    $('#sort').value = ui.sort;
+
+    // filter options + datalists
+    const cats = uniq(items.map(p => p.category));
+    fillSelect($('#fCat'), cats, 'ทุกหมวดหมู่');
+    fillSelect($('#fStatus'), STATUSES, 'ทุกสถานะลงขาย');
+    $('#catList').innerHTML = cats.map(v => `<option value="${esc(v)}">`).join('');
+    $('#brandList').innerHTML = uniq(items.map(p => p.brand)).map(v => `<option value="${esc(v)}">`).join('');
+    $('#supplierList').innerHTML = uniq(items.map(p => p.supplier)).map(v => `<option value="${esc(v)}">`).join('');
+    $('#parentList').innerHTML = uniq(items.map(p => p.parentSku)).map(v => `<option value="${esc(v)}">`).join('');
+
+    const list = filtered();
+    $('#countText').textContent = loaded ? `แสดง ${fmt(list.length)} จาก ${fmt(items.length)} รายการ` : 'กำลังโหลด…';
+    const out = $('#out');
+    if (!loaded) { out.innerHTML = `<div class="empty"><span class="spin"></span></div>`; return; }
+    if (!items.length) { out.innerHTML = `<div class="empty"><h3>ยังไม่มีสินค้า</h3><p>กด "＋ เพิ่มสินค้า" หรือนำเข้าจากไฟล์ Excel</p></div>`; return; }
+    if (!list.length) { out.innerHTML = `<div class="empty"><h3>ไม่พบสินค้าที่ตรงกับตัวกรอง</h3><p>ลองล้างคำค้นหาหรือเปลี่ยนตัวกรอง</p></div>`; return; }
+    out.innerHTML = ui.view === 'grid' ? `<div class="grid">${list.map(card).join('')}</div>` : table(list);
+  }
+  const STOCK_LABEL = {ok: 'มีสินค้า', low: 'ใกล้หมด', out: 'หมดสต็อก'};
+  function stockPill(p) { const s = stockState(p); return s ? `<span class="pill ${s}">${STOCK_LABEL[s]}</span>` : `<span class="pill s">ยังไม่ระบุสต็อก</span>`; }
+  const statusPill = p => `<span class="pill s ${STATUS_CLS[p.status] || ''}">${esc(p.status)}</span>`;
+  function profitHtml(p) {
+    const r = profit(p);
+    if (!r) return `<span class="profit na">กำไร —</span>`;
+    return `<span class="profit ${r.value < 0 ? 'neg' : 'pos'}" title="กำไรประมาณ / หน่วย">${r.value < 0 ? '' : '+'}${money2(r.value)}</span>`;
+  }
+  function readyHtml(p) {
+    const r = readiness(p);
+    return `<span class="ready ${r.done === r.total ? 'full' : ''}" title="ข้อมูลพร้อมลง Shopee"><span class="rb"><i style="width:${r.done / r.total * 100}%"></i></span>${r.done}/${r.total}</span>`;
+  }
+  function card(p) {
+    const a = avail(p);
+    return `<button class="card" type="button" data-open="${esc(p.id)}">
+      <div class="thumb">${p.images[0] ? imgTag(p.images[0], 500, p.name) : `<div class="noimg"><svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 16-5-5-8 8"/></svg>ยังไม่มีรูป</div>`}
+        <div class="badges">${stockPill(p)}${statusPill(p)}</div>
+        ${p.images.length > 1 ? `<span class="count">${p.images.length} รูป</span>` : ''}
+      </div>
+      <div class="cbody">
+        <span class="sku">${esc(p.sku)}</span>
+        <span class="cname">${esc(p.name || '(ไม่มีชื่อ)')}</span>
+        <span class="cmeta">${esc([p.brand, p.variant, p.category].filter(Boolean).join(' · ') || '—')}</span>
+        <div class="cprice"><b>${baht(p.price)}</b>${profitHtml(p)}</div>
+        <div class="cfoot"><span>พร้อมขาย <b class="num" style="color:var(--ink)">${a == null ? '—' : fmt(a)}</b> ${esc(p.unit)}</span>${readyHtml(p)}</div>
+      </div>
+    </button>`;
+  }
+  function table(list) {
+    return `<div class="table"><table><thead><tr>
+      <th>สินค้า</th><th>SKU</th><th>สถานะ</th><th class="r">ต้นทุน</th><th class="r">ราคาขาย</th><th class="r">กำไร/หน่วย</th><th class="r">พร้อมขาย</th><th>สต็อก</th><th>ความพร้อม</th>
+    </tr></thead><tbody>${list.map(p => `<tr data-open="${esc(p.id)}" tabindex="0">
+      <td><div class="tname"><span class="tthumb">${p.images[0] ? imgTag(p.images[0], 120, '') : '—'}</span><span><b>${esc(p.name || '(ไม่มีชื่อ)')}</b><span class="cmeta">${esc([p.brand, p.variant].filter(Boolean).join(' · '))}</span></span></div></td>
+      <td class="num" style="font-size:12.5px">${esc(p.sku)}</td><td>${statusPill(p)}</td>
+      <td class="r num">${baht(p.cost)}</td><td class="r num">${baht(p.price)}</td><td class="r">${profitHtml(p)}</td>
+      <td class="r num">${avail(p) == null ? '—' : fmt(avail(p))} <span style="color:var(--muted);font-family:var(--f-body);font-size:12px">${esc(p.unit)}</span></td>
+      <td>${stockPill(p)}</td><td>${readyHtml(p)}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+
+  /* ---------- editor ---------- */
+  const F = $('#edForm');
+  let edit = null; // working copy
+  $('[name=unit]', F).innerHTML = UNITS.map(u => `<option>${u}</option>`).join('');
+  $('[name=status]', F).innerHTML = STATUSES.map(u => `<option>${u}</option>`).join('');
+
+  function openEditor(p, isCopy) {
+    edit = norm(p || blank());
+    if (isCopy) { edit.id = ''; edit.sku = ''; edit.createdAt = edit.updatedAt = edit.updatedBy = ''; edit.status = 'เตรียมข้อมูล'; edit.shopeeUrl = ''; }
+    const isNew = !edit.id;
+    $('#edTitle span').textContent = isNew ? (isCopy ? 'คัดลอกเป็นสินค้าใหม่' : 'เพิ่มสินค้าใหม่') : edit.name || 'แก้ไขสินค้า';
+    for (const el of F.elements) {
+      if (!el.name || el.type === 'checkbox') continue;
+      const v = edit[el.name];
+      if (el.tagName === 'SELECT' && v && ![...el.options].some(o => o.value === v)) el.add(new Option(v, v));
+      el.value = v == null ? '' : v;
+      el.closest('.f')?.classList.remove('err');
+    }
+    $('#delBtn').hidden = isNew; $('#dupBtn').hidden = isNew;
+    $('#feePctIn').placeholder = settings.feePct != null ? `ค่าเริ่มต้น ${settings.feePct}%` : 'ยังไม่ระบุ';
+    $('#fixedIn').placeholder = settings.fixedFee != null ? `ค่าเริ่มต้น ฿${settings.fixedFee}` : '0';
+    $('[name=dts]', F).placeholder = settings.dts != null ? `ค่าเริ่มต้น ${settings.dts} วัน` : 'ยังไม่ระบุ';
+    $('#edMeta').textContent = edit.updatedAt ? `แก้ไขล่าสุด ${new Date(edit.updatedAt).toLocaleString('th-TH', {dateStyle: 'medium', timeStyle: 'short'})}${edit.updatedBy ? ' โดย ' + edit.updatedBy : ''}` : '';
+    $('#squareOpt').checked = store.get('rcc-square', true);
+    renderImgs(); live();
+    $('#edScrim').hidden = false; document.body.style.overflow = 'hidden';
+    $('#edScrim .body').scrollTop = 0;
+    if (isNew) setTimeout(() => $('[name=name]', F).focus(), 50);
+  }
+  function closeEditor() { $('#edScrim').hidden = true; document.body.style.overflow = ''; edit = null; }
+  function readForm() {
+    const x = Object.assign({}, edit);
+    for (const el of F.elements) if (el.name && el.type !== 'checkbox' && el.type !== 'file') x[el.name] = el.value;
+    return norm(x);
+  }
+  function live() {
+    if (!edit) return;
+    const x = readForm();
+    const nc = $('#nameCount'); nc.textContent = `${x.name.length}/${NAME_MAX}`; nc.classList.toggle('over', x.name.length > NAME_MAX);
+    const dc = $('#descCount'); dc.textContent = `${x.description.length}/${DESC_MAX}`; dc.classList.toggle('over', x.description.length > DESC_MAX);
+    const r = profit(x);
+    const fp = effFee(x);
+    $('#calc').innerHTML = r ? `
+      <div><span>ราคาขาย</span><span>${money2(x.price)}</span></div>
+      ${x.discount ? `<div class="muted"><span>− ส่วนลดร้าน</span><span>${money2(x.discount)}</span></div>` : ''}
+      <div class="muted"><span>− ค่าธรรมเนียม ${fp != null ? fmt(fp, fp % 1 ? 2 : 0) + '%' : '0%'}${effFixed(x) ? ' + คงที่' : ''}</span><span>${money2(r.fee)}</span></div>
+      <div class="muted"><span>− ต้นทุนสินค้า</span><span>${money2(x.cost)}</span></div>
+      ${x.packing ? `<div class="muted"><span>− ค่าบรรจุภัณฑ์</span><span>${money2(x.packing)}</span></div>` : ''}
+      ${x.other ? `<div class="muted"><span>− ค่าใช้จ่ายอื่น</span><span>${money2(x.other)}</span></div>` : ''}
+      <div class="tot" style="color:${r.value < 0 ? 'var(--bad)' : 'var(--ok)'}"><span>กำไร${r.margin != null ? ` (${fmt(r.margin, 1)}%)` : ''}</span><span>${money2(r.value)}</span></div>`
+      : `<div class="muted" style="display:block">กรอกต้นทุนและราคาขายเพื่อคำนวณ ค่าที่เว้นว่างนับเป็น 0${fp == null ? '<br>ยังไม่ได้ตั้งค่าธรรมเนียมเริ่มต้น (ปุ่มตั้งค่า)' : ''}</div>`;
+    const c = checks(x), done = c.filter(k => k[1]).length;
+    $('#readyScore').textContent = `${done}/${c.length}`;
+    $('#checks').innerHTML = c.map(([t, ok, note]) => `<li class="${ok ? 'on' : ''}"><span>${t}${note ? `<small>${note}</small>` : ''}</span></li>`).join('');
+    const a = avail(x);
+    $('#availOut').textContent = a == null ? '—' : `${fmt(a)} ${x.unit}`;
+    $('#availOut').style.color = {low: 'var(--warn)', out: 'var(--bad)', ok: 'var(--ok)'}[stockState(x)] || '';
+  }
+  F.addEventListener('input', live);
+  F.addEventListener('change', live);
+
+  function renderImgs() {
+    const box = $('#imgs');
+    box.innerHTML = edit.images.map((u, i) => `<div class="im">${imgTag(u, 300, 'รูปที่ ' + (i + 1))}${i === 0 ? '<span class="tag">ปก</span>' : ''}
+      <div class="ops">${i > 0 ? `<button type="button" data-img-cover="${i}" title="ตั้งเป็นรูปปก">★</button>` : '<span></span>'}<button type="button" data-img-del="${i}" title="นำรูปออก">✕</button></div></div>`).join('')
+      + (uploading ? Array.from({length: uploading}, () => `<div class="im loading"><span class="spin"></span></div>`).join('') : '')
+      + (edit.images.length + uploading < MAX_IMG ? `<button type="button" class="addimg" id="addImgBtn"><b>＋</b>เพิ่มรูป<br><span style="font-size:11px">${edit.images.length}/${MAX_IMG}</span></button>` : '');
+    live();
+  }
+  let uploading = 0;
+  async function addFiles(files) {
+    const room = MAX_IMG - edit.images.length - uploading;
+    const list = [...files].filter(f => /^image\//.test(f.type)).slice(0, Math.max(0, room));
+    if (!list.length) { if (room <= 0) toast(`ใส่รูปได้สูงสุด ${MAX_IMG} รูป`); return; }
+    const square = $('#squareOpt').checked; store.set('rcc-square', square);
+    const target = edit;
+    uploading += list.length; renderImgs();
+    for (const f of list) {
+      try {
+        if (f.size > 15 * 1024 * 1024) throw new Error('ไฟล์ใหญ่เกิน 15 MB');
+        const data = await shrink(f, square);
+        const res = await api('upload', {name: (readForm().sku || 'item') + '-' + Date.now() + '.jpg', data});
+        if (edit === target) edit.images.push(res.url);
+      } catch (e) { toast('อัปโหลดรูปไม่สำเร็จ: ' + e.message); }
+      finally { uploading--; if (edit === target) renderImgs(); }
+    }
+  }
+  $('#imgs').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'addImgBtn') return $('#imgFile').click();
+    if (b.dataset.imgDel != null) { edit.images.splice(+b.dataset.imgDel, 1); renderImgs(); }
+    if (b.dataset.imgCover != null) { const [m] = edit.images.splice(+b.dataset.imgCover, 1); edit.images.unshift(m); renderImgs(); }
+  });
+  $('#imgFile').addEventListener('change', e => { addFiles(e.target.files); e.target.value = ''; });
+  const secImg = $('#secImg');
+  secImg.addEventListener('dragover', e => { e.preventDefault(); secImg.classList.add('drop'); });
+  secImg.addEventListener('dragleave', () => secImg.classList.remove('drop'));
+  secImg.addEventListener('drop', e => { e.preventDefault(); secImg.classList.remove('drop'); addFiles(e.dataTransfer.files); });
+  $('#addUrlBtn').addEventListener('click', () => {
+    if (edit.images.length >= MAX_IMG) return toast(`ใส่รูปได้สูงสุด ${MAX_IMG} รูป`);
+    const box = document.createElement('div');
+    box.className = 'f'; box.style.marginTop = '8px';
+    box.innerHTML = `<span style="display:flex;gap:6px"><input type="url" placeholder="วางลิงก์รูป https://…" style="flex:1"><button type="button" class="btn btn-brand btn-sm">เพิ่ม</button></span>`;
+    $('#addUrlBtn').closest('.imgopts').after(box);
+    const inp = $('input', box); inp.focus();
+    const go = () => { const u = inp.value.trim(); if (/^https?:\/\//.test(u)) { edit.images.push(u); renderImgs(); } box.remove(); };
+    $('button', box).onclick = go;
+    inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); go(); } if (ev.key === 'Escape') box.remove(); });
+  });
+
+  F.addEventListener('submit', async e => {
+    e.preventDefault();
+    if (uploading) return toast('รอให้อัปโหลดรูปเสร็จก่อน');
+    const x = readForm();
+    let bad = null;
+    for (const k of ['name', 'sku']) { const el = $(`[name=${k}]`, F); const miss = !x[k]; el.closest('.f').classList.toggle('err', miss); if (miss && !bad) bad = el; }
+    if (bad) { bad.focus(); return toast('กรอกชื่อสินค้าและรหัส SKU'); }
+    if (items.some(o => o.sku.toLowerCase() === x.sku.toLowerCase() && o.id !== x.id)) { $('[name=sku]', F).closest('.f').classList.add('err'); $('[name=sku]', F).focus(); return toast('รหัส SKU นี้มีอยู่แล้ว'); }
+    const btn = $('#saveBtn'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> กำลังบันทึก';
+    busy = true;
+    try {
+      const res = await api('save', {product: x});
+      const saved = norm(res.product);
+      const i = items.findIndex(o => o.id === saved.id);
+      i < 0 ? items.unshift(saved) : items[i] = saved;
+      closeEditor(); render(); toast('บันทึกแล้ว: ' + saved.name);
+    } catch (err) { toast(err.message); }
+    finally { busy = false; btn.disabled = false; btn.textContent = 'บันทึกสินค้า'; }
+  });
+  $('#delBtn').addEventListener('click', async () => {
+    const x = edit; if (!x?.id) return;
+    if (!await confirmBox(`ลบ "${x.name}" (${x.sku}) ออกจากแค็ตตาล็อก?`, 'ลบสินค้า')) return;
+    busy = true;
+    try { await api('delete', {id: x.id}); items = items.filter(o => o.id !== x.id); closeEditor(); render(); toast('ลบแล้ว'); }
+    catch (e) { toast(e.message); } finally { busy = false; }
+  });
+  $('#dupBtn').addEventListener('click', () => { const x = readForm(); openEditor(x, true); toast('คัดลอกแล้ว ใส่ SKU ใหม่แล้วกดบันทึก'); });
+
+  /* ---------- dialogs ---------- */
+  document.addEventListener('click', e => {
+    const close = e.target.closest('[data-close]');
+    if (close) { const s = close.closest('.scrim'); if (s.id === 'edScrim') closeEditor(); else s.hidden = true; }
+    const open = e.target.closest('[data-open]');
+    if (open) { const p = items.find(o => o.id === open.dataset.open); if (p) openEditor(p); }
+    if (!e.target.closest('.menu')) { $('#ioMenu').hidden = true; $('#ioBtn').setAttribute('aria-expanded', 'false'); }
+  });
+  $('#out').addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.matches('tr[data-open]')) e.target.click(); });
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (!$('#cfScrim').hidden) return $('#cfNo').click();
+    if (!$('#edScrim').hidden && !e.target.closest('#imgs, .imgopts + .f')) closeEditor();
+    else if (!$('#setScrim').hidden) $('#setScrim').hidden = true;
+  });
+  function confirmBox(msg, yes) {
+    return new Promise(done => {
+      $('#cfBody').textContent = msg; $('#cfYes').textContent = yes || 'ยืนยัน'; $('#cfScrim').hidden = false;
+      const fin = v => { $('#cfScrim').hidden = true; $('#cfYes').onclick = $('#cfNo').onclick = null; done(v); };
+      $('#cfYes').onclick = () => fin(true); $('#cfNo').onclick = () => fin(false);
+    });
+  }
+  let tt;
+  function toast(m) { const t = $('#toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => t.hidden = true, 3200); }
+  function setSync(ok, txt) { $('#sync').classList.toggle('live', ok); $('#sync span').textContent = txt; }
+
+  /* ---------- toolbar ---------- */
+  $('#addBtn').onclick = () => openEditor(null);
+  $('#tiles').addEventListener('click', e => { const b = e.target.closest('[data-tile]'); if (!b) return; ui.tile = b.dataset.tile === ui.tile ? 'all' : b.dataset.tile; store.set('rcc-ui', ui); render(); });
+  $$('.seg [data-view]').forEach(b => b.onclick = () => { ui.view = b.dataset.view; store.set('rcc-ui', ui); render(); });
+  $('#sort').onchange = e => { ui.sort = e.target.value; store.set('rcc-ui', ui); render(); };
+  ['#q', '#fCat', '#fStatus', '#fStock'].forEach(s => $(s).addEventListener('input', render));
+  $('#ioBtn').onclick = () => { const m = $('#ioMenu'); m.hidden = !m.hidden; $('#ioBtn').setAttribute('aria-expanded', String(!m.hidden)); };
+  $('#ioMenu').addEventListener('click', e => {
+    const b = e.target.closest('[data-io]'); if (!b) return;
+    $('#ioMenu').hidden = true;
+    const k = b.dataset.io;
+    if (!window.XLSX && k !== 'csv') return toast('โหลดตัวจัดการ Excel ไม่สำเร็จ ลองรีเฟรชหน้า');
+    if (k === 'shopee') exportShopee();
+    if (k === 'all') exportAll(items, 'แค็ตตาล็อก-ทั้งหมด');
+    if (k === 'template') exportAll([], 'แบบฟอร์มนำเข้า');
+    if (k === 'csv') exportCsv();
+    if (k === 'import') $('#importFile').click();
+  });
+
+  /* ---------- Excel ---------- */
+  // Thai column headers for the full export / import file (same labels as the Products sheet).
+  const COLS = [
+    ['sku', 'รหัส SKU'], ['name', 'ชื่อสินค้า'], ['category', 'หมวดหมู่ร้าน'], ['brand', 'ยี่ห้อ / รุ่น'], ['unit', 'หน่วยขาย'], ['status', 'สถานะลงขาย'],
+    ['shopeeCat', 'หมวดหมู่ Shopee'], ['description', 'รายละเอียดสินค้า'], ['parentSku', 'Parent SKU'], ['varName', 'ชื่อตัวเลือก'], ['variant', 'ตัวเลือก / ขนาด'],
+    ['images', 'ลิงก์รูป (บรรทัดละรูป)'], ['size', 'ขนาดสินค้า (ซม.)'], ['pkgL', 'กล่อง ยาว (ซม.)'], ['pkgW', 'กล่อง กว้าง (ซม.)'], ['pkgH', 'กล่อง สูง (ซม.)'],
+    ['weight', 'น้ำหนักสินค้า (กก.)'], ['packedWeight', 'น้ำหนักหลังแพ็ก (กก.)'], ['dts', 'เวลาเตรียมจัดส่ง (วัน)'],
+    ['cost', 'ต้นทุนสินค้า'], ['price', 'ราคาขาย'], ['discount', 'ส่วนลดที่ร้านออก'], ['packing', 'ค่าบรรจุภัณฑ์'], ['other', 'ค่าใช้จ่ายอื่น'], ['feePct', 'ค่าธรรมเนียมรวม (%)'], ['fixedFee', 'ค่าธรรมเนียมคงที่ / หน่วย'],
+    ['stock', 'คงเหลือจริง'], ['reserved', 'จองรอส่ง'], ['reorder', 'จุดสั่งซื้อเพิ่ม'], ['location', 'ตำแหน่งจัดเก็บ'], ['supplier', 'ผู้จำหน่าย'], ['lead', 'ระยะเวลาสั่งเข้า (วัน)'],
+    ['shopeeUrl', 'ลิงก์สินค้า Shopee'], ['notes', 'หมายเหตุ']
+  ];
+  const stamp = () => new Date().toISOString().slice(0, 10);
+  function exportAll(list, name) {
+    const rows = list.map(p => { const r = {}; COLS.forEach(([k, h]) => r[h] = k === 'images' ? p.images.join('\n') : (p[k] ?? '')); return r; });
+    const ws = XLSX.utils.json_to_sheet(rows, {header: COLS.map(c => c[1])});
+    ws['!cols'] = COLS.map(([k]) => ({wch: k === 'name' || k === 'description' || k === 'images' ? 40 : 14}));
+    const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'สินค้า');
+    XLSX.writeFile(wb, `${name}-${stamp()}.xlsx`);
+  }
+  function exportShopee() {
+    // Rows sharing a Parent SKU (2+ rows) become one listing with variations, numbered via Variation Integration No.
+    const list = items.filter(p => p.status !== 'เลิกขาย');
+    if (!list.length) return toast('ยังไม่มีสินค้าให้ส่งออก');
+    const groups = {}; list.forEach(p => { if (p.parentSku) (groups[p.parentSku] = groups[p.parentSku] || []).push(p); });
+    const vno = {}; let n = 0;
+    Object.entries(groups).forEach(([k, g]) => { if (g.length > 1) vno[k] = String(++n); });
+    const H = ['Category', 'Product Name', 'Product Description', 'Parent SKU', 'Variation Integration No.', 'Variation Name1', 'Option for Variation 1', 'Image per Variation',
+      'Variation Name2', 'Option for Variation 2', 'Price', 'Stock', 'SKU', 'Cover image', ...Array.from({length: 8}, (_, i) => `Item image ${i + 1}`),
+      'Weight', 'Length', 'Width', 'Height', 'Days to ship'];
+    const sorted = [...list].sort((a, b) => (a.parentSku || a.sku).localeCompare(b.parentSku || b.sku, 'en', {numeric: true}) || a.sku.localeCompare(b.sku, 'en', {numeric: true}));
+    const rows = sorted.map(p => {
+      const grp = vno[p.parentSku];
+      const head = grp ? groups[p.parentSku][0] : p; // listing-level fields come from the first row of the group
+      const imgs = (grp && !p.images.length ? head.images : p.images).map(u => { const id = driveId(u); return id ? `https://lh3.googleusercontent.com/d/${id}` : (u.startsWith('data:') ? '' : u); });
+      const a = avail(p);
+      return [head.shopeeCat, head.name, head.description, p.parentSku || p.sku, grp || '', grp ? (p.varName || head.varName || 'ตัวเลือก') : '', grp ? (p.variant || p.sku) : '',
+        grp ? (p.images[0] ? imgs[0] : '') : '', '', '', p.price ?? '', a == null ? '' : Math.max(0, a), p.sku,
+        imgs[0] || '', ...Array.from({length: 8}, (_, i) => imgs[i + 1] || ''),
+        p.packedWeight ?? p.weight ?? '', p.pkgL ?? '', p.pkgW ?? '', p.pkgH ?? '', p.dts ?? settings.dts ?? ''];
+    });
+    const ws = XLSX.utils.aoa_to_sheet([H, ...rows]);
+    ws['!cols'] = H.map(h => ({wch: /Name|Description/.test(h) ? 36 : /image/i.test(h) ? 28 : 14}));
+    const notes = [['วิธีใช้ไฟล์นี้'],
+      ['1. ใน Shopee Seller Center ไปที่ สินค้าของฉัน > เครื่องมือจัดการหลายรายการ (Batch Tools) > เพิ่มสินค้าหลายรายการ (Mass Upload) แล้วดาวน์โหลดแบบฟอร์มตามหมวดหมู่'],
+      ['2. คัดลอกข้อมูลจากชีต Shopee ไปวางในคอลัมน์ที่ชื่อตรงกันของแบบฟอร์ม (ชื่อคอลัมน์ในแบบฟอร์มจริงอาจต่างเล็กน้อยตามหมวดหมู่)'],
+      ['3. คอลัมน์ Category ต้องเป็นรหัสหมวดหมู่ของ Shopee ถ้ายังเป็นชื่อหมวด ให้เลือกรหัสจากแบบฟอร์ม'],
+      ['4. สินค้าที่มี Parent SKU เดียวกันตั้งแต่ 2 รายการขึ้นไป จะรวมเป็นสินค้าเดียวที่มีตัวเลือก (Variation Integration No. เดียวกัน)'],
+      ['5. น้ำหนัก (กก.) ใช้น้ำหนักหลังแพ็ก ถ้าไม่มีใช้น้ำหนักสินค้า / Stock = คงเหลือจริง − จองรอส่ง'],
+      ['6. ลิงก์รูปมาจาก Google Drive ของร้าน ถ้า Shopee ดึงรูปไม่ได้ ให้ดาวน์โหลดรูปแล้วอัปโหลดใน Seller Center แทน'],
+      [''], ['สินค้าที่สถานะ "เลิกขาย" ไม่ถูกส่งออก'], ['ส่งออกเมื่อ ' + new Date().toLocaleString('th-TH')]];
+    const wn = XLSX.utils.aoa_to_sheet(notes); wn['!cols'] = [{wch: 120}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Shopee');
+    XLSX.utils.book_append_sheet(wb, wn, 'วิธีใช้');
+    XLSX.writeFile(wb, `Shopee-mass-upload-${stamp()}.xlsx`);
+    const miss = list.filter(p => !isComplete(p)).length;
+    toast(miss ? `ส่งออกแล้ว · มี ${miss} รายการที่ข้อมูลยังไม่ครบ` : 'ส่งออกแล้ว');
+  }
+  function exportCsv() {
+    const list = filtered();
+    const q = v => { const s = String(v ?? ''); return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const lines = [[...COLS.map(c => c[1]), 'พร้อมขาย', 'กำไรประมาณ/หน่วย', 'ความพร้อม'].map(q).join(',')];
+    list.forEach(p => lines.push([...COLS.map(([k]) => k === 'images' ? p.images.filter(u => !u.startsWith('data:')).join(' | ') : p[k]), avail(p), profit(p)?.value?.toFixed(2), `${readiness(p).done}/${readiness(p).total}`].map(q).join(',')));
+    const blob = new Blob(['﻿' + lines.join('\r\n')], {type: 'text/csv;charset=utf-8'});
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `แค็ตตาล็อก-${stamp()}.csv`; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+  $('#importFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+    try {
+      const wb = XLSX.read(await f.arrayBuffer());
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: ''});
+      const byHead = Object.fromEntries(COLS.map(([k, h]) => [h.replace(/\s/g, ''), k]));
+      COLS.forEach(([k]) => byHead[k.toLowerCase()] = k);
+      Object.assign(byHead, {'sku': 'sku', 'ชื่อ': 'name', 'หมวดหมู่': 'category', 'ราคา': 'price', 'ต้นทุน': 'cost', 'คงเหลือ': 'stock', 'จำนวน': 'stock', 'ยี่ห้อ': 'brand', 'หน่วย': 'unit', 'รูป': 'images', 'รูปภาพ': 'images'});
+      const incoming = [];
+      for (const r of rows) {
+        const x = {};
+        for (const [h, v] of Object.entries(r)) { const k = byHead[h.replace(/\s/g, '')] || byHead[h.trim().toLowerCase()]; if (k && v !== '') x[k] = v; }
+        if (!x.sku || !x.name && !items.some(o => o.sku.toLowerCase() === String(x.sku).trim().toLowerCase())) continue;
+        const cur = items.find(o => o.sku.toLowerCase() === String(x.sku).trim().toLowerCase());
+        incoming.push(norm(Object.assign({}, cur || blank(), x)));
+      }
+      if (!incoming.length) return toast('ไม่พบแถวที่มีรหัส SKU และชื่อสินค้า ตรวจหัวคอลัมน์ให้ตรงกับแบบฟอร์ม');
+      const upd = incoming.filter(x => x.id).length;
+      if (!await confirmBox(`นำเข้า ${incoming.length} รายการ: เพิ่มใหม่ ${incoming.length - upd} · อัปเดต ${upd} (ช่องที่ว่างในไฟล์จะคงค่าเดิมไว้)`, 'นำเข้า')) return;
+      busy = true; setSync(true, 'กำลังนำเข้า…');
+      const res = await api('bulk', {products: incoming});
+      busy = false; await refresh(); toast(`นำเข้าแล้ว: เพิ่ม ${res.added} · อัปเดต ${res.updated}`);
+    } catch (err) { busy = false; toast('นำเข้าไม่สำเร็จ: ' + err.message); }
+  });
+
+  /* ---------- settings ---------- */
+  $('#settingsBtn').onclick = () => {
+    const f = $('#setForm');
+    f.feePct.value = settings.feePct ?? ''; f.fixedFee.value = settings.fixedFee ?? ''; f.dts.value = settings.dts ?? '';
+    $('#setWho').textContent = DEMO ? 'โหมดตัวอย่าง' : me ? 'ผู้ใช้: ' + me : '';
+    $('#logoutBtn').hidden = DEMO;
+    $('#setScrim').hidden = false;
+  };
+  $('#setForm').addEventListener('submit', async e => {
+    e.preventDefault(); const f = e.target;
+    const s = {feePct: toNum(f.feePct.value), fixedFee: toNum(f.fixedFee.value), dts: toNum(f.dts.value)};
+    try { const r = await api('settings', {settings: s}); settings = {feePct: toNum(r.settings.feePct), fixedFee: toNum(r.settings.fixedFee), dts: toNum(r.settings.dts)}; $('#setScrim').hidden = true; render(); toast('บันทึกการตั้งค่าแล้ว'); }
+    catch (err) { toast(err.message); }
+  });
+  $('#logoutBtn').onclick = () => { pin = ''; store.del('rcc-pin'); items = []; loaded = false; me = ''; $('#setScrim').hidden = true; $('#who').textContent = ''; render(); askPin(); };
+
+  /* ---------- PIN ---------- */
+  function askPin(err) { $('#pinScrim').hidden = false; $('#pinErr').textContent = err || ''; $('#pinIn').value = ''; setTimeout(() => $('#pinIn').focus(), 50); setSync(false, 'ยังไม่เข้าสู่ระบบ'); }
+  $('#pinForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    pin = $('#pinIn').value.trim(); if (!pin) return;
+    const b = $('#pinGo'); b.disabled = true; b.innerHTML = '<span class="spin"></span> กำลังตรวจสอบ';
+    try {
+      const data = await api('list');
+      store.set('rcc-pin', pin); $('#pinScrim').hidden = true;
+      applyList(data); setSync(true, 'เชื่อมต่อแล้ว'); render(); showWho();
+    } catch (ex) { if ($('#pinScrim').hidden) askPin(ex.message); else $('#pinErr').textContent = ex.message; }
+    finally { b.disabled = false; b.textContent = 'เข้าสู่ระบบ'; }
+  });
+  const showWho = () => { $('#who').textContent = me ? 'ผู้ใช้: ' + me : ''; };
+
+  /* ---------- boot ---------- */
+  render();
+  if (DEMO) {
+    const b = $('#banner'); b.hidden = false;
+    b.innerHTML = '<b>โหมดตัวอย่าง</b> · ยังไม่ได้เชื่อม Google Sheets ข้อมูลจะเก็บไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น ใส่ API_URL ในไฟล์ index.html เพื่อใช้งานจริง';
+    refresh();
+  } else if (!pin) askPin();
+  else refresh().then(showWho);
+  setInterval(() => { if (document.visibilityState === 'visible') refresh(true); }, 60000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && loaded) refresh(true); });
+})();
+</script>
+</body>
+</html>
