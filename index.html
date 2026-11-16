@@ -390,7 +390,8 @@ label.f .lb i.over{color:var(--bad)}
             <label class="f req wall"><span class="lb"><b>ชื่อสินค้า</b><i id="nameCount">0/120</i></span><input name="name" maxlength="255" placeholder="เช่น คีมตัดสายไฟ 6 นิ้ว ด้ามหุ้มยาง King Eagle"></label>
             <label class="f req"><span class="lb"><b>รหัส SKU</b></span><input name="sku" class="num" placeholder="เช่น KE-CUT-006"><span class="help">ไม่ซ้ำกัน ใช้ A–Z 0–9 - _</span></label>
             <label class="f"><span class="lb">หมวดหมู่ร้าน</span><input name="category" list="catList" placeholder="เช่น คีมและประแจ"></label>
-            <label class="f"><span class="lb">ยี่ห้อ / รุ่น</span><input name="brand" list="brandList"></label>
+            <label class="f"><span class="lb">ยี่ห้อ (Brand)</span><input name="brand" list="brandList" placeholder="เช่น King Eagle, BOSCH หรือ No brand"></label>
+            <label class="f"><span class="lb">รุ่น</span><input name="model" placeholder="เช่น 08-16101, B-51356"></label>
             <label class="f"><span class="lb">หน่วยขาย</span><select name="unit"></select></label>
             <label class="f"><span class="lb">สถานะลงขาย</span><select name="status"></select></label>
             <label class="f"><span class="lb">ลิงก์สินค้า Shopee</span><input name="shopeeUrl" type="url" placeholder="https://shopee.co.th/…"></label>
@@ -420,14 +421,17 @@ label.f .lb i.over{color:var(--bad)}
         </section>
 
         <section class="sec">
-          <h3>ต้นทุนและราคาต่อหน่วย <span class="hint">บาท</span></h3>
+          <h3>ราคาต่อหน่วย <span class="hint">บาท</span></h3>
           <div class="fg c3">
-            <label class="f"><span class="lb">ต้นทุนสินค้า</span><input name="cost" type="number" min="0" step="any" inputmode="decimal" placeholder="ยังไม่ระบุ"></label>
-            <label class="f"><span class="lb">ราคาขาย</span><input name="price" type="number" min="0" step="any" inputmode="decimal" placeholder="ยังไม่ระบุ"></label>
+            <label class="f"><span class="lb">1. ราคาต้นทุน</span><input name="cost" type="number" min="0" step="any" inputmode="decimal" placeholder="ยังไม่ระบุ"></label>
+            <label class="f"><span class="lb">2. ราคาหน้าร้าน</span><input name="storePrice" type="number" min="0" step="any" inputmode="decimal" placeholder="ยังไม่ระบุ"></label>
+            <label class="f"><span class="lb">3. ราคา Shopee</span><input name="price" type="number" min="0" step="any" inputmode="decimal" placeholder="ยังไม่ระบุ"><span class="help">ราคานี้ใช้ส่งออกไป Shopee</span></label>
+          </div>
+          <h3 style="margin-top:16px">ค่าใช้จ่ายเมื่อขายบน Shopee <span class="hint">บาท / หน่วย</span></h3>
+          <div class="fg c3">
             <label class="f"><span class="lb">ส่วนลดที่ร้านออก</span><input name="discount" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></label>
             <label class="f"><span class="lb">ค่าบรรจุภัณฑ์</span><input name="packing" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></label>
             <label class="f"><span class="lb">ค่าใช้จ่ายอื่น</span><input name="other" type="number" min="0" step="any" inputmode="decimal" placeholder="0"></label>
-            <span></span>
             <label class="f"><span class="lb">ค่าธรรมเนียมรวม (%)</span><input name="feePct" type="number" min="0" step="any" inputmode="decimal" id="feePctIn"><span class="help" id="feeHelp">เว้นว่าง = ใช้ค่าเริ่มต้นร้าน</span></label>
             <label class="f"><span class="lb">ค่าธรรมเนียมคงที่ / หน่วย</span><input name="fixedFee" type="number" min="0" step="any" inputmode="decimal" id="fixedIn"></label>
           </div>
@@ -448,7 +452,7 @@ label.f .lb i.over{color:var(--bad)}
       </form>
       <aside>
         <div class="box">
-          <h4>กำไรประมาณ / หน่วย</h4>
+          <h4>กำไรต่อหน่วย</h4>
           <div class="calc" id="calc"></div>
         </div>
         <div class="box">
@@ -540,8 +544,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
   const DEMO = !API_URL;
 
   /* ---------- data model (keys match the Products sheet in Code.gs) ---------- */
-  const NUM = ['pkgL','pkgW','pkgH','weight','packedWeight','dts','cost','price','packing','other','discount','feePct','fixedFee','stock','reserved','reorder','lead'];
-  const TEXT = ['id','sku','parentSku','name','category','shopeeCat','brand','varName','variant','unit','status','description','size','location','supplier','shopeeUrl','notes','createdAt','updatedAt','updatedBy'];
+  const NUM = ['pkgL','pkgW','pkgH','weight','packedWeight','dts','cost','storePrice','price','packing','other','discount','feePct','fixedFee','stock','reserved','reorder','lead'];
+  const TEXT = ['id','sku','parentSku','name','category','shopeeCat','brand','model','varName','variant','unit','status','description','size','location','supplier','shopeeUrl','notes','createdAt','updatedAt','updatedBy'];
   const UNITS = ['ชิ้น','อัน','ชุด','คู่','กล่อง','แพ็ก','ม้วน','เส้น','เมตร','ตัว','ถุง','ลัง'];
   const STATUSES = ['เตรียมข้อมูล','รอถ่ายรูป','พร้อมลงขาย','ลงขายแล้ว','พักขาย','เลิกขาย'];
   const STATUS_CLS = {'พร้อมลงขาย':'s-ready','ลงขายแล้ว':'s-live','พักขาย':'s-off','เลิกขาย':'s-off'};
@@ -581,6 +585,13 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
   }
   const effFee = p => p.feePct != null ? p.feePct : settings.feePct;
   const effFixed = p => p.fixedFee != null ? p.fixedFee : settings.fixedFee;
+  // Storefront sale: no Shopee fees, so profit is simply storefront price minus cost.
+  function storeHtml(x) {
+    if (x.storePrice == null) return '';
+    const v = x.cost == null ? null : x.storePrice - x.cost;
+    return `<div style="margin-top:10px;padding-top:8px;border-top:1px dashed var(--line)"><span>ราคาหน้าร้าน</span><span>${money2(x.storePrice)}</span></div>`
+      + (v == null ? '' : `<div class="tot" style="margin-top:2px;color:${v < 0 ? 'var(--bad)' : 'var(--ok)'}"><span>กำไรหน้าร้าน${x.storePrice > 0 ? ` (${fmt(v / x.storePrice * 100, 1)}%)` : ''}</span><span>${money2(v)}</span></div>`);
+  }
   function profit(p) {
     if (p.price == null || p.cost == null) return null;
     const net = p.price - (p.discount || 0);
@@ -595,7 +606,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
       ['รูปสินค้าอย่างน้อย 1 รูป', p.images.length > 0, p.images.length && p.images.length < 3 ? 'แนะนำ 3 รูปขึ้นไป' : ''],
       ['หมวดหมู่ Shopee', !!p.shopeeCat, ''],
       ['รายละเอียดสินค้า', p.description.length >= 30, p.description && p.description.length < 30 ? 'ควรเขียนให้ละเอียดขึ้น' : ''],
-      ['ราคาขาย', p.price != null && p.price > 0, ''],
+      ['ยี่ห้อ (Brand)', !!p.brand, p.brand ? '' : 'ถ้าไม่มียี่ห้อ ใส่ No brand'],
+      ['ราคา Shopee', p.price != null && p.price > 0, ''],
       ['จำนวนคงเหลือ', p.stock != null, ''],
       ['น้ำหนักหลังแพ็ก', p.packedWeight != null && p.packedWeight > 0, ''],
       ['ขนาดกล่องพัสดุ', [p.pkgL, p.pkgW, p.pkgH].every(v => v != null && v > 0), '']
@@ -702,7 +714,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
     ];
     const products = rows.map((r, i) => norm({
       id: 'demo' + i, sku: r[0], name: r[1], category: r[2], brand: r[3], varName: r[4], variant: r[5], parentSku: r[6],
-      cost: r[7], price: r[8], stock: r[9], reserved: r[10], reorder: r[11], status: r[12], weight: r[13], packedWeight: r[14],
+      cost: r[7], storePrice: Math.round(r[8] * 0.9), price: r[8], stock: r[9], reserved: r[10], reorder: r[11], status: r[12], weight: r[13], packedWeight: r[14],
       pkgL: r[15]?.[0], pkgW: r[15]?.[1], pkgH: r[15]?.[2], packing: 4,
       shopeeCat: i < 4 ? 'เครื่องมือช่าง' : '', description: i < 3 ? 'ข้อมูลตัวอย่าง: เหล็กกล้าคุณภาพสูง ผ่านการชุบแข็ง ด้ามหุ้มยางจับถนัดมือ เหมาะสำหรับงานช่างไฟและงานทั่วไป' : '',
       images: i < 2 ? [sampleImg(i)] : [], createdAt: t, updatedAt: t, updatedBy: 'ระบบ'
@@ -726,7 +738,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
       if (cat && p.category !== cat) return false;
       if (st && p.status !== st) return false;
       if (sk && stockState(p) !== sk) return false;
-      if (q && ![p.name, p.sku, p.brand, p.parentSku, p.variant, p.category].join(' ').toLowerCase().includes(q)) return false;
+      if (q && ![p.name, p.sku, p.brand, p.model, p.parentSku, p.variant, p.category].join(' ').toLowerCase().includes(q)) return false;
       return true;
     });
     const by = {
@@ -797,7 +809,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
       <div class="cbody">
         <span class="sku">${esc(p.sku)}</span>
         <span class="cname">${esc(p.name || '(ไม่มีชื่อ)')}</span>
-        <span class="cmeta">${esc([p.brand, p.variant, p.category].filter(Boolean).join(' · ') || '—')}</span>
+        <span class="cmeta">${esc([[p.brand, p.model].filter(Boolean).join(' '), p.variant, p.category].filter(Boolean).join(' · ') || '—')}</span>
         <div class="cprice"><b>${baht(p.price)}</b>${profitHtml(p)}</div>
         <div class="cfoot"><span>พร้อมขาย <b class="num" style="color:var(--ink)">${a == null ? '—' : fmt(a)}</b> ${esc(p.unit)}</span>${readyHtml(p)}</div>
       </div>
@@ -805,11 +817,11 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
   }
   function table(list) {
     return `<div class="table"><table><thead><tr>
-      <th>สินค้า</th><th>SKU</th><th>สถานะ</th><th class="r">ต้นทุน</th><th class="r">ราคาขาย</th><th class="r">กำไร/หน่วย</th><th class="r">พร้อมขาย</th><th>สต็อก</th><th>ความพร้อม</th>
+      <th>สินค้า</th><th>SKU</th><th>สถานะ</th><th class="r">ต้นทุน</th><th class="r">หน้าร้าน</th><th class="r">Shopee</th><th class="r">กำไร/หน่วย</th><th class="r">พร้อมขาย</th><th>สต็อก</th><th>ความพร้อม</th>
     </tr></thead><tbody>${list.map(p => `<tr data-open="${esc(p.id)}" tabindex="0">
-      <td><div class="tname"><span class="tthumb">${p.images[0] ? imgTag(p.images[0], 120, '') : '—'}</span><span><b>${esc(p.name || '(ไม่มีชื่อ)')}</b><span class="cmeta">${esc([p.brand, p.variant].filter(Boolean).join(' · '))}</span></span></div></td>
+      <td><div class="tname"><span class="tthumb">${p.images[0] ? imgTag(p.images[0], 120, '') : '—'}</span><span><b>${esc(p.name || '(ไม่มีชื่อ)')}</b><span class="cmeta">${esc([[p.brand, p.model].filter(Boolean).join(' '), p.variant].filter(Boolean).join(' · '))}</span></span></div></td>
       <td class="num" style="font-size:12.5px">${esc(p.sku)}</td><td>${statusPill(p)}</td>
-      <td class="r num">${baht(p.cost)}</td><td class="r num">${baht(p.price)}</td><td class="r">${profitHtml(p)}</td>
+      <td class="r num">${baht(p.cost)}</td><td class="r num">${baht(p.storePrice)}</td><td class="r num">${baht(p.price)}</td><td class="r">${profitHtml(p)}</td>
       <td class="r num">${avail(p) == null ? '—' : fmt(avail(p))} <span style="color:var(--muted);font-family:var(--f-body);font-size:12px">${esc(p.unit)}</span></td>
       <td>${stockPill(p)}</td><td>${readyHtml(p)}</td></tr>`).join('')}</tbody></table></div>`;
   }
@@ -857,14 +869,14 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
     const r = profit(x);
     const fp = effFee(x);
     $('#calc').innerHTML = r ? `
-      <div><span>ราคาขาย</span><span>${money2(x.price)}</span></div>
+      <div><span>ราคา Shopee</span><span>${money2(x.price)}</span></div>
       ${x.discount ? `<div class="muted"><span>− ส่วนลดร้าน</span><span>${money2(x.discount)}</span></div>` : ''}
       <div class="muted"><span>− ค่าธรรมเนียม ${fp != null ? fmt(fp, fp % 1 ? 2 : 0) + '%' : '0%'}${effFixed(x) ? ' + คงที่' : ''}</span><span>${money2(r.fee)}</span></div>
-      <div class="muted"><span>− ต้นทุนสินค้า</span><span>${money2(x.cost)}</span></div>
+      <div class="muted"><span>− ราคาต้นทุน</span><span>${money2(x.cost)}</span></div>
       ${x.packing ? `<div class="muted"><span>− ค่าบรรจุภัณฑ์</span><span>${money2(x.packing)}</span></div>` : ''}
       ${x.other ? `<div class="muted"><span>− ค่าใช้จ่ายอื่น</span><span>${money2(x.other)}</span></div>` : ''}
-      <div class="tot" style="color:${r.value < 0 ? 'var(--bad)' : 'var(--ok)'}"><span>กำไร${r.margin != null ? ` (${fmt(r.margin, 1)}%)` : ''}</span><span>${money2(r.value)}</span></div>`
-      : `<div class="muted" style="display:block">กรอกต้นทุนและราคาขายเพื่อคำนวณ ค่าที่เว้นว่างนับเป็น 0${fp == null ? '<br>ยังไม่ได้ตั้งค่าธรรมเนียมเริ่มต้น (ปุ่มตั้งค่า)' : ''}</div>`;
+      <div class="tot" style="color:${r.value < 0 ? 'var(--bad)' : 'var(--ok)'}"><span>กำไร Shopee${r.margin != null ? ` (${fmt(r.margin, 1)}%)` : ''}</span><span>${money2(r.value)}</span></div>${storeHtml(x)}`
+      : `<div class="muted" style="display:block">กรอกราคาต้นทุนและราคา Shopee เพื่อคำนวณ ค่าที่เว้นว่างนับเป็น 0${fp == null ? '<br>ยังไม่ได้ตั้งค่าธรรมเนียมเริ่มต้น (ปุ่มตั้งค่า)' : ''}</div>${storeHtml(x)}`;
     const c = checks(x), done = c.filter(k => k[1]).length;
     $('#readyScore').textContent = `${done}/${c.length}`;
     $('#checks').innerHTML = c.map(([t, ok, note]) => `<li class="${ok ? 'on' : ''}"><span>${t}${note ? `<small>${note}</small>` : ''}</span></li>`).join('');
@@ -1136,11 +1148,11 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
   /* ---------- Excel ---------- */
   // Thai column headers for the full export / import file (same labels as the Products sheet).
   const COLS = [
-    ['sku', 'รหัส SKU'], ['name', 'ชื่อสินค้า'], ['category', 'หมวดหมู่ร้าน'], ['brand', 'ยี่ห้อ / รุ่น'], ['unit', 'หน่วยขาย'], ['status', 'สถานะลงขาย'],
+    ['sku', 'รหัส SKU'], ['name', 'ชื่อสินค้า'], ['category', 'หมวดหมู่ร้าน'], ['brand', 'ยี่ห้อ (Brand)'], ['model', 'รุ่น'], ['unit', 'หน่วยขาย'], ['status', 'สถานะลงขาย'],
     ['shopeeCat', 'หมวดหมู่ Shopee'], ['description', 'รายละเอียดสินค้า'], ['parentSku', 'Parent SKU'], ['varName', 'ชื่อตัวเลือก'], ['variant', 'ตัวเลือก / ขนาด'],
     ['images', 'ลิงก์รูป (บรรทัดละรูป)'], ['size', 'ขนาดสินค้า (ซม.)'], ['pkgL', 'กล่อง ยาว (ซม.)'], ['pkgW', 'กล่อง กว้าง (ซม.)'], ['pkgH', 'กล่อง สูง (ซม.)'],
     ['weight', 'น้ำหนักสินค้า (กก.)'], ['packedWeight', 'น้ำหนักหลังแพ็ก (กก.)'], ['dts', 'เวลาเตรียมจัดส่ง (วัน)'],
-    ['cost', 'ต้นทุนสินค้า'], ['price', 'ราคาขาย'], ['discount', 'ส่วนลดที่ร้านออก'], ['packing', 'ค่าบรรจุภัณฑ์'], ['other', 'ค่าใช้จ่ายอื่น'], ['feePct', 'ค่าธรรมเนียมรวม (%)'], ['fixedFee', 'ค่าธรรมเนียมคงที่ / หน่วย'],
+    ['cost', 'ราคาต้นทุน'], ['storePrice', 'ราคาหน้าร้าน'], ['price', 'ราคา Shopee'], ['discount', 'ส่วนลดที่ร้านออก'], ['packing', 'ค่าบรรจุภัณฑ์'], ['other', 'ค่าใช้จ่ายอื่น'], ['feePct', 'ค่าธรรมเนียมรวม (%)'], ['fixedFee', 'ค่าธรรมเนียมคงที่ / หน่วย'],
     ['stock', 'คงเหลือจริง'], ['reserved', 'จองรอส่ง'], ['reorder', 'จุดสั่งซื้อเพิ่ม'], ['location', 'ตำแหน่งจัดเก็บ'], ['supplier', 'ผู้จำหน่าย'], ['lead', 'ระยะเวลาสั่งเข้า (วัน)'],
     ['shopeeUrl', 'ลิงก์สินค้า Shopee'], ['notes', 'หมายเหตุ']
   ];
@@ -1207,13 +1219,14 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
       const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: ''});
       const byHead = Object.fromEntries(COLS.map(([k, h]) => [h.replace(/\s/g, ''), k]));
       COLS.forEach(([k]) => byHead[k.toLowerCase()] = k);
-      Object.assign(byHead, {'sku': 'sku', 'ชื่อ': 'name', 'หมวดหมู่': 'category', 'ราคา': 'price', 'ต้นทุน': 'cost', 'คงเหลือ': 'stock', 'จำนวน': 'stock', 'ยี่ห้อ': 'brand', 'หน่วย': 'unit', 'รูป': 'images', 'รูปภาพ': 'images'});
+      Object.assign(byHead, {'sku': 'sku', 'ชื่อ': 'name', 'หมวดหมู่': 'category', 'ราคา': 'price', 'ราคาขาย': 'price', 'ต้นทุน': 'cost', 'ต้นทุนสินค้า': 'cost', 'ยี่ห้อ/รุ่น': 'brand', 'brand': 'brand', 'รุ่น': 'model', 'model': 'model', 'หน้าร้าน': 'storePrice', 'คงเหลือ': 'stock', 'จำนวน': 'stock', 'ยี่ห้อ': 'brand', 'หน่วย': 'unit', 'รูป': 'images', 'รูปภาพ': 'images'});
       const incoming = [];
       for (const r of rows) {
         const x = {};
         for (const [h, v] of Object.entries(r)) { const k = byHead[h.replace(/\s/g, '')] || byHead[h.trim().toLowerCase()]; if (k && v !== '') x[k] = v; }
         if (!x.sku || !x.name && !items.some(o => o.sku.toLowerCase() === String(x.sku).trim().toLowerCase())) continue;
         const cur = items.find(o => o.sku.toLowerCase() === String(x.sku).trim().toLowerCase());
+        if (x.brand && !x.model && String(x.brand).includes(' / ')) { const [b, ...m] = String(x.brand).split(' / '); x.brand = b.trim(); x.model = m.join(' / ').trim(); } // old "ยี่ห้อ / รุ่น" files
         incoming.push(norm(Object.assign({}, cur || blank(), x)));
       }
       if (!incoming.length) return toast('ไม่พบแถวที่มีรหัส SKU และชื่อสินค้า ตรวจหัวคอลัมน์ให้ตรงกับแบบฟอร์ม');
