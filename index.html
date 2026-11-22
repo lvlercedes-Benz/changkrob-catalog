@@ -427,6 +427,7 @@ label.f .lb i.over{color:var(--bad)}
           <h3>ขนาดและการจัดส่ง</h3>
           <div class="fg">
             <label class="f"><span class="lb">ขนาดสินค้า (ก × ย × ส ซม.)</span><input name="size" placeholder="เช่น 16 × 5 × 2"></label>
+            <label class="f"><span class="lb">ชนิดกล่อง (กล่องไปรษณีย์)</span><select name="boxType" id="boxType"></select><span class="help">เลือกเบอร์กล่องแล้วระบบเติมขนาดกล่องให้</span></label>
             <label class="f"><span class="lb">ขนาดกล่องพัสดุ ย × ก × ส (ซม.)</span><span class="dims"><input name="pkgL" type="number" min="0" step="any" inputmode="decimal" placeholder="ยาว"><input name="pkgW" type="number" min="0" step="any" inputmode="decimal" placeholder="กว้าง"><input name="pkgH" type="number" min="0" step="any" inputmode="decimal" placeholder="สูง"></span></label>
             <label class="f"><span class="lb">น้ำหนักสินค้า (กก.)</span><input name="weight" type="number" min="0" step="any" inputmode="decimal" placeholder="ยังไม่ระบุ"></label>
             <label class="f"><span class="lb">น้ำหนักหลังแพ็ก (กก.)</span><input name="packedWeight" type="number" min="0" step="any" inputmode="decimal" placeholder="ยังไม่ระบุ"><span class="help">Shopee ใช้คำนวณค่าส่ง</span></label>
@@ -558,7 +559,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
 
   /* ---------- data model (keys match the Products sheet in Code.gs) ---------- */
   const NUM = ['pkgL','pkgW','pkgH','weight','packedWeight','dts','cost','storePrice','price','packing','other','discount','feePct','fixedFee','stock','reserved','reorder','lead'];
-  const TEXT = ['id','sku','parentSku','name','category','shopeeCat','brand','model','varName','variant','unit','status','description','size','location','supplier','shopeeUrl','notes','createdAt','updatedAt','updatedBy','video'];
+  const TEXT = ['id','sku','parentSku','name','category','shopeeCat','brand','model','varName','variant','unit','status','description','size','location','supplier','shopeeUrl','notes','createdAt','updatedAt','updatedBy','video','boxType'];
   const UNITS = ['ชิ้น','อัน','ชุด','คู่','กล่อง','แพ็ก','ม้วน','เส้น','เมตร','ตัว','ถุง','ลัง'];
   const STATUSES = ['เตรียมข้อมูล','รอถ่ายรูป','พร้อมลงขาย','ลงขายแล้ว','พักขาย','เลิกขาย'];
   const STATUS_CLS = {'พร้อมลงขาย':'s-ready','ลงขายแล้ว':'s-live','พักขาย':'s-off','เลิกขาย':'s-off'};
@@ -815,6 +816,25 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
     const r = readiness(p);
     return `<span class="ready ${r.done === r.total ? 'full' : ''}" title="ข้อมูลพร้อมลง Shopee"><span class="rb"><i style="width:${r.done / r.total * 100}%"></i></span>${r.done}/${r.total}</span>`;
   }
+  /* ---------- post-office box sizes (ไปรษณีย์ไทย มาตรฐาน), กว้าง × ยาว × สูง ซม. ---------- */
+  const BOXES = [['00', 9.8, 14, 6], ['0', 11, 17, 6], ['0+4', 11, 17, 10], ['AA', 13, 17, 7], ['A', 14, 20, 6], ['2A', 14, 20, 12],
+    ['B', 17, 25, 9], ['2B', 17, 25, 18], ['B+7', 17, 25, 16], ['C', 20, 30, 11], ['C+9', 20, 30, 20], ['CD', 15, 15, 15],
+    ['D', 22, 35, 14], ['D+11', 22, 35, 25], ['E', 24, 40, 17], ['2F', 31, 30, 13], ['F', 30, 45, 20], ['G', 31, 36, 26],
+    ['H', 40, 45, 34], ['I', 45, 55, 40]];
+  const boxLabel = p => p.boxType ? (BOXES.some(b => b[0] === p.boxType) ? 'กล่อง ' + p.boxType : p.boxType) : '';
+  function initBoxSelect() { // called once the editor form (F) exists
+    const sel = $('#boxType'); if (!sel) return;
+    sel.innerHTML = '<option value="">ยังไม่เลือก</option>'
+      + BOXES.map(([n, w, l, h]) => `<option value="${n}">เบอร์ ${n} · ${w} × ${l} × ${h} ซม.</option>`).join('')
+      + '<option value="กล่องเดิมของสินค้า">กล่องเดิมของสินค้า (ใส่ขนาดเอง)</option><option value="กล่องอื่น">กล่องอื่น (ใส่ขนาดเอง)</option>';
+    sel.addEventListener('change', () => {
+      const b = BOXES.find(x => x[0] === sel.value); if (!b) return live();
+      const [, w, l, h] = b, set = (n, v) => { $(`[name=${n}]`, F).value = v; };
+      set('pkgL', Math.max(w, l)); set('pkgW', Math.min(w, l)); set('pkgH', h);
+      live(); toast(`ใส่ขนาดกล่องเบอร์ ${b[0]} แล้ว`);
+    });
+  }
+
   function card(p) {
     const a = avail(p);
     return `<button class="card" type="button" data-open="${esc(p.id)}">
@@ -825,7 +845,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
       <div class="cbody">
         <span class="sku">${esc(p.sku)}</span>
         <span class="cname">${esc(p.name || '(ไม่มีชื่อ)')}</span>
-        <span class="cmeta">${esc([[p.brand, p.model].filter(Boolean).join(' '), p.variant, p.category].filter(Boolean).join(' · ') || '—')}</span>
+        <span class="cmeta">${esc([[p.brand, p.model].filter(Boolean).join(' '), p.variant, p.category, boxLabel(p)].filter(Boolean).join(' · ') || '—')}</span>
         <div class="cprice"><b>${baht(p.price)}</b>${profitHtml(p)}</div>
         <div class="cfoot"><span>พร้อมขาย <b class="num" style="color:var(--ink)">${a == null ? '—' : fmt(a)}</b> ${esc(p.unit)}</span>${readyHtml(p)}</div>
       </div>
@@ -835,7 +855,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
     return `<div class="table"><table><thead><tr>
       <th>สินค้า</th><th>SKU</th><th>สถานะ</th><th class="r">ต้นทุน</th><th class="r">หน้าร้าน</th><th class="r">Shopee</th><th class="r">กำไร/หน่วย</th><th class="r">พร้อมขาย</th><th>สต็อก</th><th>ความพร้อม</th>
     </tr></thead><tbody>${list.map(p => `<tr data-open="${esc(p.id)}" tabindex="0">
-      <td><div class="tname"><span class="tthumb">${p.images[0] ? imgTag(p.images[0], 120, '') : '—'}</span><span><b>${esc(p.name || '(ไม่มีชื่อ)')}</b><span class="cmeta">${esc([[p.brand, p.model].filter(Boolean).join(' '), p.variant].filter(Boolean).join(' · '))}</span></span></div></td>
+      <td><div class="tname"><span class="tthumb">${p.images[0] ? imgTag(p.images[0], 120, '') : '—'}</span><span><b>${esc(p.name || '(ไม่มีชื่อ)')}</b><span class="cmeta">${esc([[p.brand, p.model].filter(Boolean).join(' '), p.variant, boxLabel(p)].filter(Boolean).join(' · '))}</span></span></div></td>
       <td class="num" style="font-size:12.5px">${esc(p.sku)}</td><td>${statusPill(p)}</td>
       <td class="r num">${baht(p.cost)}</td><td class="r num">${baht(p.storePrice)}</td><td class="r num">${baht(p.price)}</td><td class="r">${profitHtml(p)}</td>
       <td class="r num">${avail(p) == null ? '—' : fmt(avail(p))} <span style="color:var(--muted);font-family:var(--f-body);font-size:12px">${esc(p.unit)}</span></td>
@@ -844,6 +864,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
 
   /* ---------- editor ---------- */
   const F = $('#edForm');
+  initBoxSelect();
   let edit = null; // working copy
   $('[name=unit]', F).innerHTML = UNITS.map(u => `<option>${u}</option>`).join('');
   $('[name=status]', F).innerHTML = STATUSES.map(u => `<option>${u}</option>`).join('');
@@ -1256,7 +1277,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
   const COLS = [
     ['sku', 'รหัส SKU'], ['name', 'ชื่อสินค้า'], ['category', 'หมวดหมู่ร้าน'], ['brand', 'ยี่ห้อ (Brand)'], ['model', 'รุ่น'], ['unit', 'หน่วยขาย'], ['status', 'สถานะลงขาย'],
     ['shopeeCat', 'หมวดหมู่ Shopee'], ['description', 'รายละเอียดสินค้า'], ['parentSku', 'Parent SKU'], ['varName', 'ชื่อตัวเลือก'], ['variant', 'ตัวเลือก / ขนาด'],
-    ['images', 'ลิงก์รูป (บรรทัดละรูป)'], ['video', 'ลิงก์วิดีโอ'], ['size', 'ขนาดสินค้า (ซม.)'], ['pkgL', 'กล่อง ยาว (ซม.)'], ['pkgW', 'กล่อง กว้าง (ซม.)'], ['pkgH', 'กล่อง สูง (ซม.)'],
+    ['images', 'ลิงก์รูป (บรรทัดละรูป)'], ['video', 'ลิงก์วิดีโอ'], ['size', 'ขนาดสินค้า (ซม.)'], ['boxType', 'ชนิดกล่อง'], ['pkgL', 'กล่อง ยาว (ซม.)'], ['pkgW', 'กล่อง กว้าง (ซม.)'], ['pkgH', 'กล่อง สูง (ซม.)'],
     ['weight', 'น้ำหนักสินค้า (กก.)'], ['packedWeight', 'น้ำหนักหลังแพ็ก (กก.)'], ['dts', 'เวลาเตรียมจัดส่ง (วัน)'],
     ['cost', 'ราคาต้นทุน'], ['storePrice', 'ราคาหน้าร้าน'], ['price', 'ราคา Shopee'], ['discount', 'ส่วนลดที่ร้านออก'], ['packing', 'ค่าบรรจุภัณฑ์'], ['other', 'ค่าใช้จ่ายอื่น'], ['feePct', 'ค่าธรรมเนียมรวม (%)'], ['fixedFee', 'ค่าธรรมเนียมคงที่ / หน่วย'],
     ['stock', 'คงเหลือจริง'], ['reserved', 'จองรอส่ง'], ['reorder', 'จุดสั่งซื้อเพิ่ม'], ['location', 'ตำแหน่งจัดเก็บ'], ['supplier', 'ผู้จำหน่าย'], ['lead', 'ระยะเวลาสั่งเข้า (วัน)'],
@@ -1325,7 +1346,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
       const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {defval: ''});
       const byHead = Object.fromEntries(COLS.map(([k, h]) => [h.replace(/\s/g, ''), k]));
       COLS.forEach(([k]) => byHead[k.toLowerCase()] = k);
-      Object.assign(byHead, {'sku': 'sku', 'ชื่อ': 'name', 'หมวดหมู่': 'category', 'ราคา': 'price', 'ราคาขาย': 'price', 'ต้นทุน': 'cost', 'ต้นทุนสินค้า': 'cost', 'ยี่ห้อ/รุ่น': 'brand', 'brand': 'brand', 'รุ่น': 'model', 'model': 'model', 'หน้าร้าน': 'storePrice', 'คงเหลือ': 'stock', 'จำนวน': 'stock', 'ยี่ห้อ': 'brand', 'หน่วย': 'unit', 'รูป': 'images', 'รูปภาพ': 'images'});
+      Object.assign(byHead, {'sku': 'sku', 'ชื่อ': 'name', 'หมวดหมู่': 'category', 'ราคา': 'price', 'ราคาขาย': 'price', 'ต้นทุน': 'cost', 'ต้นทุนสินค้า': 'cost', 'ยี่ห้อ/รุ่น': 'brand', 'brand': 'brand', 'รุ่น': 'model', 'model': 'model', 'หน้าร้าน': 'storePrice', 'คงเหลือ': 'stock', 'จำนวน': 'stock', 'ยี่ห้อ': 'brand', 'หน่วย': 'unit', 'รูป': 'images', 'รูปภาพ': 'images', 'กล่อง': 'boxType', 'เบอร์กล่อง': 'boxType'});
       const incoming = [];
       for (const r of rows) {
         const x = {};
