@@ -22,7 +22,7 @@ const FIELDS = [
   ['brand', 'ยี่ห้อ (Brand)', 't', ['ยี่ห้อ / รุ่น']], ['model', 'รุ่น', 't'], ['unit', 'หน่วยขาย', 't'], ['status', 'สถานะลงขาย', 't'],
   ['shopeeCat', 'หมวดหมู่ Shopee', 't'], ['description', 'รายละเอียดสินค้า', 't'],
   ['parentSku', 'Parent SKU', 't'], ['varName', 'ชื่อตัวเลือก', 't'], ['variant', 'ตัวเลือก / ขนาด', 't'],
-  ['images', 'ลิงก์รูป (บรรทัดละรูป)', 't'], ['size', 'ขนาดสินค้า (ซม.)', 't'],
+  ['images', 'ลิงก์รูป (บรรทัดละรูป)', 't'], ['video', 'ลิงก์วิดีโอ', 't'], ['size', 'ขนาดสินค้า (ซม.)', 't'],
   ['pkgL', 'กล่อง ยาว (ซม.)', 'n'], ['pkgW', 'กล่อง กว้าง (ซม.)', 'n'], ['pkgH', 'กล่อง สูง (ซม.)', 'n'],
   ['weight', 'น้ำหนักสินค้า (กก.)', 'n'], ['packedWeight', 'น้ำหนักหลังแพ็ก (กก.)', 'n'], ['dts', 'เวลาเตรียมจัดส่ง (วัน)', 'n'],
   ['cost', 'ราคาต้นทุน', 'n', ['ต้นทุนสินค้า']], ['storePrice', 'ราคาหน้าร้าน', 'n'], ['price', 'ราคา Shopee', 'n', ['ราคาขาย']], ['discount', 'ส่วนลดที่ร้านออก', 'n'],
@@ -54,6 +54,8 @@ function handle_(req) {
       case 'bulk': return withLock_(() => bulk_(req.products || [], staff));
       case 'settings': return withLock_(() => saveSettings_(req.settings || {}, staff));
       case 'upload': return {ok: true, url: upload_(req.name, req.data)};
+      case 'videoStart': return videoStart_(req);
+      case 'videoChunk': return videoChunk_(req);
       default: return {ok: false, error: 'ไม่รู้จักคำสั่ง: ' + req.action};
     }
   } catch (err) {
@@ -158,6 +160,7 @@ function clean_(raw) {
     let v = raw ? raw[k] : null;
     if (k === 'images') v = (Array.isArray(v) ? v : String(v || '').split(/\s*[\n|]\s*/))
       .map(s => String(s).trim()).filter(s => /^https?:\/\//.test(s)).slice(0, 9).join('\n');
+    else if (k === 'video') v = /^https?:\/\//.test(String(v || '').trim()) ? String(v).trim() : '';
     else if (type === 'n') v = (v === '' || v == null || isNaN(Number(v))) ? '' : Number(v);
     else v = v == null ? '' : String(v).trim();
     p[k] = v;
@@ -274,6 +277,57 @@ function upload_(name, dataUrl) {
   const file = imageFolder_().createFile(Utilities.newBlob(bytes, m[1], safe));
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); // Shopee and the web page need to load it
   return 'https://lh3.googleusercontent.com/d/' + file.getId();
+}
+
+/* ---------------- product video (Google Drive, uploaded in pieces) ----------------
+   หน้าเว็บส่งวิดีโอเป็นชิ้นละ 4 MB แล้วสคริปต์ต่อเข้าไฟล์เดียวใน Drive ด้วย resumable upload
+   ครั้งแรกหลังอัปเดตโค้ดนี้ ให้กด Run ฟังก์ชัน authorize หนึ่งครั้งเพื่ออนุญาตสิทธิ์เพิ่ม */
+const VIDEO_MAX = 30 * 1024 * 1024;      // Shopee รับวิดีโอสินค้าไม่เกิน 30 MB
+const VIDEO_CHUNK = 4 * 1024 * 1024;     // ต้องหารด้วย 256 KB ลงตัว (ข้อกำหนดของ Drive)
+function videoStart_(req) {
+  const size = Number(req.size), mime = String(req.mime || '').toLowerCase();
+  if (!(size > 0)) throw new Error('ไฟล์วิดีโอว่าง');
+  if (size > VIDEO_MAX) throw new Error('วิดีโอใหญ่เกิน 30 MB');
+  if (!/^video\/(mp4|quicktime)$/.test(mime)) throw new Error('รองรับเฉพาะไฟล์ MP4 หรือ MOV');
+  const name = String(req.name || 'video.mp4').replace(/[^\w.\-ก-๙]/g, '_').slice(0, 80);
+  const res = UrlFetchApp.fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable&fields=id', {
+    method: 'post', contentType: 'application/json; charset=UTF-8', muteHttpExceptions: true,
+    headers: {Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), 'X-Upload-Content-Type': mime, 'X-Upload-Content-Length': String(size)},
+    payload: JSON.stringify({name, mimeType: mime, parents: [imageFolder_().getId()]})
+  });
+  const h = res.getHeaders(), loc = h.Location || h.location;
+  if (res.getResponseCode() !== 200 || !loc) throw new Error('เริ่มอัปโหลดวิดีโอไม่ได้ (' + res.getResponseCode() + ')');
+  const token = Utilities.getUuid();
+  CacheService.getScriptCache().put('vid:' + token, JSON.stringify({loc, size, mime}), 21600);
+  return {ok: true, token, chunk: VIDEO_CHUNK};
+}
+function videoChunk_(req) {
+  const cache = CacheService.getScriptCache(), key = 'vid:' + String(req.token || '');
+  const raw = cache.get(key);
+  if (!raw) throw new Error('หมดเวลาอัปโหลด กรุณาเลือกวิดีโอใหม่อีกครั้ง');
+  const s = JSON.parse(raw);
+  const bytes = Utilities.base64Decode(String(req.data || ''));
+  const start = Number(req.start), end = start + bytes.length - 1;
+  if (!(start >= 0) || !bytes.length || end >= s.size) throw new Error('ข้อมูลวิดีโอไม่ตรงกัน กรุณาลองใหม่');
+  const res = UrlFetchApp.fetch(s.loc, {
+    method: 'put', contentType: s.mime, payload: bytes, muteHttpExceptions: true, followRedirects: false,
+    headers: {'Content-Range': 'bytes ' + start + '-' + end + '/' + s.size}
+  });
+  const code = res.getResponseCode();
+  if (code === 308) return {ok: true, done: false, received: end + 1};
+  if (code === 200 || code === 201) {
+    const id = JSON.parse(res.getContentText()).id;
+    DriveApp.getFileById(id).setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    cache.remove(key);
+    return {ok: true, done: true, url: 'https://drive.google.com/file/d/' + id + '/view'};
+  }
+  throw new Error('อัปโหลดวิดีโอไม่สำเร็จ (' + code + ')');
+}
+// กด Run ฟังก์ชันนี้หนึ่งครั้งหลังอัปเดตโค้ด เพื่อให้ Google ขอสิทธิ์ส่งไฟล์วิดีโอเข้า Drive
+function authorize() {
+  UrlFetchApp.getRequest('https://www.googleapis.com/drive/v3/about');
+  Logger.log('โฟลเดอร์รูปและวิดีโอ: ' + imageFolder_().getUrl());
+  Logger.log('อนุญาตสิทธิ์เรียบร้อย ต่อไปให้ Deploy > Manage deployments > New version');
 }
 
 /* ---------------- log ---------------- */

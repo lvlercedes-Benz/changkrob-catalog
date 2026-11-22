@@ -206,6 +206,17 @@ label.f .lb i.over{color:var(--bad)}
 .imgopts label{display:flex;gap:6px;align-items:center}
 .drop{outline:2px dashed var(--brand);outline-offset:4px;border-radius:12px}
 .im img{cursor:zoom-in}
+/* product video */
+.vid{margin-top:14px;border:1px dashed var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.vid h4{margin:0;font-size:14px;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}
+.vid h4 small{font-weight:400;color:var(--muted);font-size:12px}
+.vid .frame{position:relative;width:100%;max-width:360px;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:#000}
+.vid .frame iframe,.vid .frame video{position:absolute;inset:0;width:100%;height:100%;border:0;object-fit:contain}
+.vid .row{display:flex;gap:6px;flex-wrap:wrap}
+.vid .bar{height:8px;border-radius:4px;background:var(--chip);overflow:hidden}
+.vid .bar i{display:block;height:100%;background:var(--brand);transition:width .2s}
+.vid .warn{font-size:12.5px;color:var(--warn);margin:0}
+.vid .muted{font-size:12.5px;color:var(--muted);margin:0}
 .imgopts .grp{display:flex;gap:6px;flex-wrap:wrap}
 
 /* image viewer: full-size photo, save one / save all */
@@ -382,6 +393,8 @@ label.f .lb i.over{color:var(--bad)}
             </span>
           </div>
           <input type="file" id="imgFile" accept="image/jpeg,image/png,image/webp" multiple hidden>
+          <div class="vid" id="vidBox"></div>
+          <input type="file" id="vidFile" accept="video/mp4,video/quicktime,.mp4,.mov" hidden>
         </section>
 
         <section class="sec">
@@ -545,7 +558,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
 
   /* ---------- data model (keys match the Products sheet in Code.gs) ---------- */
   const NUM = ['pkgL','pkgW','pkgH','weight','packedWeight','dts','cost','storePrice','price','packing','other','discount','feePct','fixedFee','stock','reserved','reorder','lead'];
-  const TEXT = ['id','sku','parentSku','name','category','shopeeCat','brand','model','varName','variant','unit','status','description','size','location','supplier','shopeeUrl','notes','createdAt','updatedAt','updatedBy'];
+  const TEXT = ['id','sku','parentSku','name','category','shopeeCat','brand','model','varName','variant','unit','status','description','size','location','supplier','shopeeUrl','notes','createdAt','updatedAt','updatedBy','video'];
   const UNITS = ['ชิ้น','อัน','ชุด','คู่','กล่อง','แพ็ก','ม้วน','เส้น','เมตร','ตัว','ถุง','ลัง'];
   const STATUSES = ['เตรียมข้อมูล','รอถ่ายรูป','พร้อมลงขาย','ลงขายแล้ว','พักขาย','เลิกขาย'];
   const STATUS_CLS = {'พร้อมลงขาย':'s-ready','ลงขายแล้ว':'s-live','พักขาย':'s-off','เลิกขาย':'s-off'};
@@ -673,6 +686,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
   }
 
   /* demo backend: same contract as Code.gs, kept in localStorage */
+  let demoVideoUrl = ''; // demo mode plays the picked file from memory; it is not kept after a reload
   function demoApi(action, p) {
     const db = store.get('rcc-demo', null) || seed();
     const now = new Date().toISOString();
@@ -700,6 +714,8 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
     }
     if (action === 'settings') { db.settings = Object.assign(db.settings, p.settings); store.set('rcc-demo', db); return {ok: true, settings: db.settings}; }
     if (action === 'upload') return {ok: true, url: p.data};
+    if (action === 'videoStart') return {ok: true, token: 'demo', chunk: 4 * 1024 * 1024};
+    if (action === 'videoChunk') return p.start + 4 * 1024 * 1024 >= p.total ? {ok: true, done: true, url: demoVideoUrl} : {ok: true, done: false};
     return Promise.reject(new Error('unknown action'));
   }
   function seed() {
@@ -894,6 +910,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
       + (uploading ? Array.from({length: uploading}, () => `<div class="im loading"><span class="spin"></span></div>`).join('') : '')
       + (edit.images.length + uploading < MAX_IMG ? `<button type="button" class="addimg" id="addImgBtn"><b>＋</b>เพิ่มรูป<br><span style="font-size:11px">${edit.images.length}/${MAX_IMG}</span></button>` : '');
     $('#saveAllBtn').hidden = !edit.images.length;
+    renderVid();
     live();
   }
   let uploading = 0;
@@ -925,7 +942,12 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
   const secImg = $('#secImg');
   secImg.addEventListener('dragover', e => { e.preventDefault(); secImg.classList.add('drop'); });
   secImg.addEventListener('dragleave', () => secImg.classList.remove('drop'));
-  secImg.addEventListener('drop', e => { e.preventDefault(); secImg.classList.remove('drop'); addFiles(e.dataTransfer.files); });
+  secImg.addEventListener('drop', e => {
+    e.preventDefault(); secImg.classList.remove('drop');
+    const fs = [...e.dataTransfer.files], v = fs.find(f => /^video\//.test(f.type) || /\.(mp4|mov)$/i.test(f.name));
+    if (v) addVideo(v);
+    addFiles(fs.filter(f => f !== v));
+  });
   $('#addUrlBtn').addEventListener('click', () => {
     if (edit.images.length >= MAX_IMG) return toast(`ใส่รูปได้สูงสุด ${MAX_IMG} รูป`);
     const box = document.createElement('div');
@@ -937,6 +959,89 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
     $('button', box).onclick = go;
     inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') { ev.preventDefault(); go(); } if (ev.key === 'Escape') box.remove(); });
   });
+
+  /* ---------- product video ---------- */
+  // Shopee: MP4, up to 30 MB, 10–60 seconds, up to 1280×1280. The file goes to the shop's Drive folder in 4 MB pieces.
+  const VID_MAX = 30 * 1024 * 1024;
+  let vidUp = null; // {pct, name, warn}
+  const vidId = u => (String(u).match(/\/file\/d\/([\w-]{20,})/) || [])[1];
+  function renderVid() {
+    const box = $('#vidBox'); if (!box || !edit) return;
+    const head = `<h4>วิดีโอสินค้า <small>ไม่บังคับ · MP4 ไม่เกิน 30 MB · ยาว 10–60 วินาที</small></h4>`;
+    if (vidUp) {
+      box.innerHTML = head + `<p class="muted">กำลังอัปโหลด ${esc(vidUp.name)} · ${vidUp.pct}%</p><div class="bar"><i style="width:${vidUp.pct}%"></i></div>`
+        + (vidUp.warn ? `<p class="warn">${esc(vidUp.warn)}</p>` : '') + `<p class="muted">อย่าปิดหน้านี้จนกว่าจะเสร็จ</p>`;
+      return;
+    }
+    const u = edit.video, id = vidId(u);
+    if (!u) {
+      box.innerHTML = head + `<div class="row"><button type="button" class="btn btn-line btn-sm" id="vidAdd">＋ เพิ่มวิดีโอ</button></div>`
+        + `<p class="muted">ถ่ายแนวตั้งหรือจัตุรัส โชว์ของจริงรอบตัวสินค้าและตอนใช้งาน หลังอัปโหลดแล้วกด "บันทึกสินค้า"</p>`;
+      return;
+    }
+    const player = id ? `<iframe src="https://drive.google.com/file/d/${id}/preview" allow="autoplay; fullscreen" allowfullscreen loading="lazy" title="วิดีโอสินค้า"></iframe>`
+      : `<video src="${esc(u)}" controls playsinline preload="metadata"></video>`;
+    box.innerHTML = head + `<div class="frame">${player}</div>`
+      + (id ? `<p class="muted">วิดีโอที่เพิ่งอัปโหลด Google Drive อาจใช้เวลาประมวลผลสักครู่ก่อนเล่นได้</p>` : '')
+      + `<div class="row"><button type="button" class="btn btn-plain btn-sm" id="vidSave">⬇ บันทึกวิดีโอ</button>`
+      + `<button type="button" class="btn btn-plain btn-sm" id="vidAdd">เปลี่ยนวิดีโอ</button>`
+      + `<button type="button" class="btn btn-plain btn-sm" id="vidDel">นำวิดีโอออก</button></div>`;
+  }
+  function videoInfo(file) {
+    return new Promise(ok => {
+      const v = document.createElement('video'), url = URL.createObjectURL(file);
+      const done = r => { URL.revokeObjectURL(url); ok(r); };
+      v.preload = 'metadata'; v.muted = true;
+      v.onloadedmetadata = () => done({sec: v.duration, w: v.videoWidth, h: v.videoHeight});
+      v.onerror = () => done(null);
+      setTimeout(() => done(null), 8000);
+      v.src = url;
+    });
+  }
+  const b64 = blob => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1] || ''); r.onerror = () => no(new Error('อ่านไฟล์ไม่ได้')); r.readAsDataURL(blob); });
+  async function addVideo(file) {
+    if (!file || !edit || vidUp) return;
+    const mime = (file.type || (/\.mov$/i.test(file.name) ? 'video/quicktime' : /\.mp4$/i.test(file.name) ? 'video/mp4' : '')).toLowerCase();
+    if (!/^video\/(mp4|quicktime)$/.test(mime)) return toast('รองรับเฉพาะไฟล์วิดีโอ MP4 หรือ MOV');
+    if (file.size > VID_MAX) return toast(`วิดีโอใหญ่ ${fmt(file.size / 1048576, 1)} MB เกินที่ Shopee รับ (30 MB) ลดความละเอียดหรือตัดให้สั้นลงก่อน`);
+    const info = await videoInfo(file), warns = [];
+    if (mime !== 'video/mp4') warns.push('ไฟล์เป็น MOV ซึ่ง Shopee ต้องการ MP4 ถ้าลง Shopee ไม่ผ่านให้แปลงเป็น MP4 ก่อน');
+    if (info && info.sec && (info.sec < 10 || info.sec > 60)) warns.push(`ความยาว ${fmt(info.sec, 0)} วินาที Shopee รับ 10–60 วินาที`);
+    if (info && Math.max(info.w, info.h) > 1280) warns.push(`ความละเอียด ${info.w}×${info.h} เกิน 1280×1280 ที่ Shopee กำหนด`);
+    const target = edit, ext = mime === 'video/mp4' ? 'mp4' : 'mov';
+    vidUp = {pct: 0, name: file.name, warn: warns.join(' · ')}; renderVid();
+    try {
+      if (DEMO) demoVideoUrl = URL.createObjectURL(file);
+      const st = await api('videoStart', {name: `${safeName(readForm().sku) || 'item'}-video-${Date.now()}.${ext}`, size: file.size, mime, total: file.size});
+      const step = st.chunk || 4 * 1024 * 1024;
+      let url = '';
+      for (let start = 0; start < file.size; start += step) {
+        const data = DEMO ? '' : await b64(file.slice(start, start + step));
+        const r = await api('videoChunk', {token: st.token, start, data, total: file.size});
+        vidUp.pct = Math.min(100, Math.round((start + step) / file.size * 100)); if (edit === target) renderVid();
+        if (r.done) { url = r.url; break; }
+      }
+      if (!url) throw new Error('อัปโหลดไม่ครบ');
+      target.video = url;
+      toast(warns.length ? 'อัปโหลดวิดีโอแล้ว (มีข้อควรระวัง) กด "บันทึกสินค้า" เพื่อเก็บ' : 'อัปโหลดวิดีโอแล้ว กด "บันทึกสินค้า" เพื่อเก็บ');
+      if (warns.length) setTimeout(() => toast(warns.join(' · ')), 2800);
+    } catch (e) { toast('อัปโหลดวิดีโอไม่สำเร็จ: ' + e.message); }
+    finally { vidUp = null; if (edit === target) { renderVid(); live(); } }
+  }
+  $('#vidBox').addEventListener('click', async e => {
+    const b = e.target.closest('button'); if (!b || !edit) return;
+    if (b.id === 'vidAdd') return $('#vidFile').click();
+    if (b.id === 'vidDel') {
+      if (!await confirmBox('นำวิดีโอออกจากสินค้านี้? (ไฟล์ใน Google Drive ยังอยู่)', 'นำออก')) return;
+      edit.video = ''; renderVid(); return;
+    }
+    if (b.id === 'vidSave') {
+      const u = edit.video, id = vidId(u);
+      openExternal(id ? `https://drive.google.com/uc?export=download&id=${id}` : u);
+      toast(touchy() ? 'เปิดวิดีโอแล้ว กดปุ่มแชร์แล้วเลือก "บันทึกวิดีโอ"' : 'เปิดลิงก์ดาวน์โหลดวิดีโอจาก Google Drive แล้ว');
+    }
+  });
+  $('#vidFile').addEventListener('change', e => { addVideo(e.target.files[0]); e.target.value = ''; });
 
   /* ---------- view & save images ---------- */
   // Full-size Drive image: =s0 asks Google for the original resolution.
@@ -1074,6 +1179,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
   F.addEventListener('submit', async e => {
     e.preventDefault();
     if (uploading) return toast('รอให้อัปโหลดรูปเสร็จก่อน');
+    if (vidUp) return toast('รอให้อัปโหลดวิดีโอเสร็จก่อน');
     const x = readForm();
     let bad = null;
     for (const k of ['name', 'sku']) { const el = $(`[name=${k}]`, F); const miss = !x[k]; el.closest('.f').classList.toggle('err', miss); if (miss && !bad) bad = el; }
@@ -1150,7 +1256,7 @@ const API_URL = 'https://script.google.com/macros/s/AKfycbyza1yUTeDLu2PtvnYCvxpV
   const COLS = [
     ['sku', 'รหัส SKU'], ['name', 'ชื่อสินค้า'], ['category', 'หมวดหมู่ร้าน'], ['brand', 'ยี่ห้อ (Brand)'], ['model', 'รุ่น'], ['unit', 'หน่วยขาย'], ['status', 'สถานะลงขาย'],
     ['shopeeCat', 'หมวดหมู่ Shopee'], ['description', 'รายละเอียดสินค้า'], ['parentSku', 'Parent SKU'], ['varName', 'ชื่อตัวเลือก'], ['variant', 'ตัวเลือก / ขนาด'],
-    ['images', 'ลิงก์รูป (บรรทัดละรูป)'], ['size', 'ขนาดสินค้า (ซม.)'], ['pkgL', 'กล่อง ยาว (ซม.)'], ['pkgW', 'กล่อง กว้าง (ซม.)'], ['pkgH', 'กล่อง สูง (ซม.)'],
+    ['images', 'ลิงก์รูป (บรรทัดละรูป)'], ['video', 'ลิงก์วิดีโอ'], ['size', 'ขนาดสินค้า (ซม.)'], ['pkgL', 'กล่อง ยาว (ซม.)'], ['pkgW', 'กล่อง กว้าง (ซม.)'], ['pkgH', 'กล่อง สูง (ซม.)'],
     ['weight', 'น้ำหนักสินค้า (กก.)'], ['packedWeight', 'น้ำหนักหลังแพ็ก (กก.)'], ['dts', 'เวลาเตรียมจัดส่ง (วัน)'],
     ['cost', 'ราคาต้นทุน'], ['storePrice', 'ราคาหน้าร้าน'], ['price', 'ราคา Shopee'], ['discount', 'ส่วนลดที่ร้านออก'], ['packing', 'ค่าบรรจุภัณฑ์'], ['other', 'ค่าใช้จ่ายอื่น'], ['feePct', 'ค่าธรรมเนียมรวม (%)'], ['fixedFee', 'ค่าธรรมเนียมคงที่ / หน่วย'],
     ['stock', 'คงเหลือจริง'], ['reserved', 'จองรอส่ง'], ['reorder', 'จุดสั่งซื้อเพิ่ม'], ['location', 'ตำแหน่งจัดเก็บ'], ['supplier', 'ผู้จำหน่าย'], ['lead', 'ระยะเวลาสั่งเข้า (วัน)'],
